@@ -157,26 +157,9 @@ def draw_fragment_coverage_matrix_plotly(
     return fig
 
 
-# fragment coverage matrix difference plotly
-def draw_fragment_coverage_matrix_difference_plotly(
-    FG,
-    peptidoform_index_1=0,
-    peptidoform_index_2=1,
-):
-    """
-    This function draws a fragment coverage matrix difference using plotly.
-
-    Parameters:
-    FG1: Fragment Graph object 1
-    FG2: Fragment Graph object 2
-    x (str): The column name to use for the intensity. Default is "intensity".
-    FG1_peptidoform_index (int): The index of the peptidoform to use for FG1. Default is 0.
-    FG2_peptidoform_index (int): The index of the peptidoform to use for FG2. Default is 0.
-
-    Returns:
-    plotly.graph_objects.Figure object if filename is None, else None.
-    """
-
+def fragment_coverage_matrix_difference(FG,
+                                        peptidoform_index_1=0,
+                                        peptidoform_index_2=1):
     # Extracting fragment data
     frag_df_1 = FG.get_fragment_table_I0(peptidoform_index=peptidoform_index_1)
     frag_df_2 = FG.get_fragment_table_I0(peptidoform_index=peptidoform_index_2)
@@ -213,6 +196,33 @@ def draw_fragment_coverage_matrix_difference_plotly(
     frag_df.loc[
         (frag_df["intensity_2"] > 1) & (frag_df["intensity_1"] == 1), "FC"
     ] = 10
+
+    return frag_df
+
+
+# fragment coverage matrix difference plotly
+def draw_fragment_coverage_matrix_difference_plotly(
+    FG,
+    peptidoform_index_1=0,
+    peptidoform_index_2=1,
+):
+    """
+    This function draws a fragment coverage matrix difference using plotly.
+
+    Parameters:
+    FG1: Fragment Graph object 1
+    FG2: Fragment Graph object 2
+    x (str): The column name to use for the intensity. Default is "intensity".
+    FG1_peptidoform_index (int): The index of the peptidoform to use for FG1. Default is 0.
+    FG2_peptidoform_index (int): The index of the peptidoform to use for FG2. Default is 0.
+
+    Returns:
+    plotly.graph_objects.Figure object if filename is None, else None.
+    """
+
+    frag_df = fragment_coverage_matrix_difference(
+        FG, peptidoform_index_1, peptidoform_index_2
+    )
 
     # # Annotations
     # frag_df["annotation"] = frag_df["FC"].apply(
@@ -265,33 +275,32 @@ def draw_barplot_intensity_SDI(FG, position_range=None):
     """
 
     # Get fragment table I0 from FG (assuming it returns a DataFrame)
-    frag_df = FG.get_all_fragment_table_I0()
+    # frag_df = FG.get_all_fragment_table_I0()
+    frag_df = fragment_coverage_matrix_difference(FG)
 
     if position_range is None:
-        frag_df = frag_df.drop_duplicates(subset=["start_pos", "end_pos", "mz"], keep=False)
+        frag_df = frag_df.drop_duplicates(subset=["start_pos", "end_pos", "mz_1", "mz_2"], keep=False)
     else:
         # use the position ranges to filter the fragment table
         # TODO check that this is correct
         frag_df = frag_df[(frag_df["start_pos"] >= position_range[0]) & (frag_df["end_pos"] <= position_range[1])]
 
-    # boxplot intensiyt in fucntion of peptidoform index
+    # boxplot intensity as function of peptidoform index
     fig = go.Figure(
         data=[
-            go.Box(
-                y=frag_df["intensity"],
-                x=frag_df["peptidoform_index"],
-                name="Intensity",
+            go.Violin(y=frag_df["FC"],
+                name="FC",
                 marker_color="blue",
             )
         ]
     )
 
     # Update layout
-    fig.update_layout(
-        xaxis_title="Peptidoform Index",
-        yaxis_title="Intensity",
-        title="Barplot of Intensity SDI",
-    )
+    # fig.update_layout(
+        # xaxis_title="Peptidoform Index",
+        # yaxis_title="Intensity",
+        # title="Barplot of Intensity SDI",
+    # )
 
     return fig
 

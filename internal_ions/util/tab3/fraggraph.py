@@ -88,13 +88,14 @@ def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False) -
             st.plotly_chart(frag_mat_plot, use_container_width=False, height=500, width=500)
 
     if len(peptidoforms) > 1:
-        diff_plot = draw_fragment_coverage_matrix_difference_plotly(fg)
-        st.markdown("**Fragment Coverage Matrix Difference:**")
-        st.plotly_chart(diff_plot, use_container_width=False, height=600, width=600)
-
-        sdi_plot = draw_barplot_intensity_SDI(fg)
-        st.markdown("**Barplot of Intensity SDI:**")
-        st.plotly_chart(sdi_plot, use_container_width=False, height=600, width=600)
+        with cols[0]:
+            diff_plot = draw_fragment_coverage_matrix_difference_plotly(fg)
+            st.markdown("**Fragment Coverage Matrix Difference:**")
+            st.plotly_chart(diff_plot, use_container_width=False, height=500, width=500)
+        with cols[1]:
+            sdi_plot = draw_barplot_intensity_SDI(fg)
+            st.markdown("**Violin plot of FC:**")
+            st.plotly_chart(sdi_plot, use_container_width=False, height=500, width=500)
 
     try:
         os.remove(output_name_prefix + "pyvis.html")
