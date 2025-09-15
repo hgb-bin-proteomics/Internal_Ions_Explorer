@@ -307,9 +307,8 @@ def main(argv=None) -> None:
                                            index=None,
                                            help="Specify a peptidoform to consider for generating the fragment graph, e.g. "
                                                 "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE.")
-            fg_peptidoform2 = st.selectbox("Optionally, specify a peptidoform to compare to:",
-                                           possible_peptidoforms,
-                                           index=None,
+            fg_peptidoform2 = st.text_input("Optionally, specify a peptidoform to compare to:",
+                                           value=None,
                                            help="Specify a peptidoform to compare the fragment graph of the first peptidoform to, e.g. "
                                                 "ARTKQTARKSTGGKAPRKQLATKAARKSAPAT[-79.966331]GGV[+79.966331]KKPHRYRPGTVALRE.")
 
@@ -322,9 +321,8 @@ def main(argv=None) -> None:
                                            help="Specify a peptidoform to consider for generating the fragment graph, e.g. "
                                                 "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE.")
 
-            fg_peptidoform2 = st.selectbox("Optionally, specify a peptidoform to compare to:",
-                                           possible_selection_values,
-                                           index=None,
+            fg_peptidoform2 = st.text_input("Optionally, specify a peptidoform to compare to:",
+                                           value=None,
                                            help="Specify a peptidoform to compare the fragment graph of the first peptidoform to, e.g. "
                                                 "ARTKQTARKSTGGKAPRKQLATKAARKSAPAT[-79.966331]GGV[+79.966331]KKPHRYRPGTVALRE.")
 
