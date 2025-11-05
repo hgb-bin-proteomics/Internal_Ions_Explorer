@@ -4,7 +4,7 @@ import logging
 from collections import Counter
 from io import StringIO
 import os
-from typing import Any, Dict, BinaryIO, TextIO
+from typing import Any, BinaryIO, TextIO
 
 
 class SpectrumFile:
@@ -68,6 +68,12 @@ class SpectrumFile:
     def __next__(self):
         return next(self.spectra_source)
 
+    def __reduce_ex__(self, protocol):
+        self.logger.debug("Reducing SpectrumFile %s for caching", self)
+        ret = super().__reduce_ex__(protocol)
+        self.logger.debug("Reduced SpectrumFile: %s", self)
+        return ret
+
 
 @st.cache_data
 def read_spectrum_file(uploaded_file: BinaryIO):
@@ -75,26 +81,14 @@ def read_spectrum_file(uploaded_file: BinaryIO):
 
 
 @st.cache_data(hash_funcs={SpectrumFile: lambda x: x.name})
-def read_spectra(file: SpectrumFile) -> Dict[int, Dict]:
+def read_spectra(file: SpectrumFile) -> dict:
     """
-    Returns a dictionary that maps scan numbers to spectra:
-    Dict["name": name,
-         "spectra": Dict[int -> Dict["spectrum"         -> pyteomics mgf spectrum
-                                     "precursor"        -> float
-                                     "charge"           -> int
-                                     "rt"               -> float
-                                     "max_intensity"    -> float
-                                     "peaks"            -> Dict[m/z -> intensity]]
+    Returns a dictionary that maps scan numbers to spectra.
     """
 
     result_dict = {}
 
-    # print("Read spectra in total:")
-
     for s, spectrum in enumerate(file):
-
-        # if (s + 1) % 1000 == 0:
-        #     print(f"\t{s + 1}")
 
         scan_nr = s
         spectrum_dict = {}
@@ -103,19 +97,18 @@ def read_spectra(file: SpectrumFile) -> Dict[int, Dict]:
         spectrum_dict["charge"] = spectrum["params"].get("charge", 0)
         spectrum_dict["rt"] = spectrum["params"].get("rtinseconds", 0.0)
         spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"]))
-        peaks = {}
-        for i, mz in enumerate(spectrum["m/z array"]):
-            peaks[mz] = spectrum["intensity array"][i]
-        spectrum_dict["peaks"] = peaks
+        spectrum_dict["min_intensity"] = float(min(spectrum["intensity array"]))
+        # peaks = {}
+        # for i, mz in enumerate(spectrum["m/z array"]):
+        #     peaks[mz] = spectrum["intensity array"][i]
+        # spectrum_dict["peaks"] = peaks
         result_dict[scan_nr] = spectrum_dict
-
-    # print(f"\nFinished reading {s + 1} spectra!")
 
     return {"name": file.name, "spectra": result_dict}
 
 
 # TODO this can be optimized
-def filter_spectra(mass_spectra: Dict[int, Any], filter_params: Dict[str, Any], name: str) -> Dict[str, Any]:
+def filter_spectra(mass_spectra: dict[int, Any], filter_params: dict[str, Any], name: str) -> dict[str, Any]:
     """
     Returns a Dict including a list of spectra from pyteomics.mgf based on the given filter criteria:
     Dict["name": name,
@@ -129,7 +122,7 @@ def filter_spectra(mass_spectra: Dict[int, Any], filter_params: Dict[str, Any], 
 
     for s, key in enumerate(mass_spectra):
         spectrum = mass_spectra[key]["spectrum"]
-        
+
         if (s + 1) % 1000 == 0:
             print(f"\t{s + 1}")
 

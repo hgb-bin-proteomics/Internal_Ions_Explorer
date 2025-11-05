@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
-
 import numpy as np
 import pandas as pd
+import logging
 import plotly.graph_objects as go
+
+logger = logging.getLogger(__name__)
 
 
 def plot_spectrum(intensity_values, mz_values) -> go.Figure:
@@ -39,19 +40,10 @@ def plot_spectra_chromatogram(spectra: dict):
 
     fig = go.Figure()
 
-    # get the min and max intensity
-    intensity_array = [spectrum["precursor"][1] for spectrum in spectra.values() if spectrum["precursor"][1]]
+    max_intensity = max(s["max_intensity"] for s in spectra.values())
+    min_intensity = min(s["min_intensity"] for s in spectra.values())
 
-    # if no values, return empty figure
-    # if len(intensity_array) <= 0:
-    #     return fig
-
-    if intensity_array:
-        min_intensity = min(intensity_array)
-        max_intensity = max(intensity_array)
-    else:
-        min_intensity, max_intensity = 0, 1
-    print("min/max intensity: ", min_intensity, max_intensity)
+    logger.debug("min/max intensity: %f, %f", min_intensity, max_intensity)
     colorscale = [[0, 'blue'], [1, 'red']]  # Define your desired colorscale
 
     # check whether min and max intensity are the same
@@ -59,9 +51,18 @@ def plot_spectra_chromatogram(spectra: dict):
         min_intensity = 0
         max_intensity = 1
 
-    for scan_nr, spectrum in spectra.items():
-        # if spectrum["precursor"][1] is None:
-        #     continue
+    # reduce the amount of points plotted if there are more than 5000 spectra
+    if len(spectra) > 50000:
+        factor = 100
+    elif len(spectra) > 5000:
+        factor = 10
+    else:
+        factor = 1
+    logger.info("Reducing number of points plotted by a factor of %d to improve performance", factor)
+
+    for i, (scan_nr, spectrum) in enumerate(spectra.items(), 1):
+        if i % factor != 0:
+            continue
         intensity = spectrum["precursor"][1]
         if intensity is None:
             color = 0
