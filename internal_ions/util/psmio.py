@@ -11,7 +11,7 @@ import logging
 def read_identifications(psms: PSMList,
                          name: str,
                          spec_file: SpectrumFile,
-                         verbose: bool = False) -> dict[str, dict]:
+                         verbose: bool = False) -> dict[str, str | dict]:
     """
     Returns a dictionary that proteins/peptides to scan numbers:
     dict["name": str,
