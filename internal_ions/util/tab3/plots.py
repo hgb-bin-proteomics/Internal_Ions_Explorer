@@ -180,6 +180,15 @@ def fragment_coverage_matrix_difference(FG,
         suffixes=("_1", "_2"),
     )
 
+    # log missing value information
+    missing_1 = frag_df["intensity_1"].isna()
+    missing_2 = frag_df["intensity_2"].isna()
+    logger.debug("Missing values in intensity_1: %d", missing_1.sum())
+    logger.debug("Missing values in intensity_2: %d", missing_2.sum())
+    logger.debug("Missing values in both: %d", (missing_1 & missing_2).sum())
+    logger.debug("Not missing: %d", (~missing_1 & ~missing_2).sum())
+    logger.debug("No change: %d", (frag_df["intensity_1"] == frag_df["intensity_2"]).sum())
+
     # Handling missing values
     frag_df["intensity_1"] = frag_df["intensity_1"].fillna(1)
     frag_df["intensity_2"] = frag_df["intensity_2"].fillna(1)
@@ -197,6 +206,9 @@ def fragment_coverage_matrix_difference(FG,
     frag_df.loc[
         (frag_df["intensity_2"] > 1) & (frag_df["intensity_1"] == 1), "FC"
     ] = 10
+
+    logger.debug("Special cases set to -10: %d", (frag_df["FC"] == -10).sum())
+    logger.debug("Special cases set to 10: %d", (frag_df["FC"] == 10).sum())
 
     return frag_df
 
