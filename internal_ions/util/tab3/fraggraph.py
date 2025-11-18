@@ -20,7 +20,7 @@ from .plots import draw_fc_dist_plot
 from ...util.constants import DIV_COLOR
 
 
-def create_fraggraph(peptidoforms):
+def create_fraggraph(peptidoforms: list[str], **kwargs) -> FragGraph:
     with st.status("Generating the fragmention graph...") as fg_gen_status:
         with st_stdout("info"):
             start_ioncaps_types = st.session_state["selected_ions_cterm"]
@@ -48,7 +48,8 @@ def create_fraggraph(peptidoforms):
                            monoisotopic=monoisotopic,
                            max_prec_charge=max_prec_charge,
                            max_isotope=max_isotope,
-                           charge_loss=charge_loss)
+                           charge_loss=charge_loss,
+                           **kwargs)
 
             fg.generate_graph(peptidoforms,
                               st.session_state["consensus_spectrum"]["mz_mean"],
@@ -59,8 +60,8 @@ def create_fraggraph(peptidoforms):
     return fg
 
 
-def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False) -> None:
-    fg = create_fraggraph(peptidoforms)
+def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False, **kwargs) -> None:
+    fg = create_fraggraph(peptidoforms, **kwargs)
 
     # file storage handling
     tmp_dir_name = "tmp_fragannot_files_653205774"
@@ -111,7 +112,7 @@ def main(argv=None) -> None:
     # st.markdown("Description of results.")
 
     params = argv or {}
-    params_keys = ["mzd", "cov", "pep1", "pep2"]
+    params_keys = ["mzd", "cov", "pep1", "pep2", "min_cosine"]
     for key in params_keys:
         if key not in params:
             # this actually should never happen!
@@ -143,8 +144,8 @@ def main(argv=None) -> None:
         if params["pep1"] is None and params["pep2"] is None:
             st.error("Please select or provide at least one peptidoform/proteoform to run Fraggraph!", icon="🚨")
         elif params["pep1"] is None and params["pep2"] is not None:
-            single_or_double_fraggraph([params["pep2"]])
+            single_or_double_fraggraph([params["pep2"]], min_cosine_similarity=params["min_cosine"])
         elif params["pep2"] is None and params["pep1"] is not None:
-            single_or_double_fraggraph([params["pep1"]])
+            single_or_double_fraggraph([params["pep1"]], min_cosine_similarity=params["min_cosine"])
         else:
-            single_or_double_fraggraph([params["pep1"], params["pep2"]])
+            single_or_double_fraggraph([params["pep1"], params["pep2"]], min_cosine_similarity=params["min_cosine"])

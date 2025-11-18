@@ -326,6 +326,14 @@ def main(argv=None) -> None:
                                                  "ARTKQTARKSTGGKAPRKQLATKAARKSAPAT[-79.966331]GGV[+79.966331]KKPHRYRPGTVALRE.",
                                             placeholder="ARTKQTARKSTGGKAPRKQLATKAARKSAPAT[-79.966331]GGV[+79.966331]KKPHRYRPGTVALRE")
 
+        fg_min_cosine = st.number_input("Minimum cosine similarity for considering fragments:",
+                                     min_value=0.0,
+                                     max_value=1.0,
+                                     value=0.7,
+                                     step=0.01,
+                                     format="%0.2f",
+                                     help="Minimum cosine similarity between fragment ion chromatograms to consider fragments as correlated.")
+
         fg_run_l, fg_run_center, fg_run_r = st.columns(3)
 
         with fg_run_center:
@@ -335,7 +343,8 @@ def main(argv=None) -> None:
             fraggraph_main({"mzd": fg_mzd,
                             "cov": fg_cov,
                             "pep1": fg_peptidoform1,
-                            "pep2": fg_peptidoform2})
+                            "pep2": fg_peptidoform2,
+                            "min_cosine": fg_min_cosine})
 
     else:
         st.error("No consensus spectrum available. Please check spectra selection and create a consensus spectrum first", icon="🚨")

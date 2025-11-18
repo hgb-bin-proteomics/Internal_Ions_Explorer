@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import logging
 import plotly.graph_objects as go
-import plotly.figure_factory as ff
+import plotly.express as px
 
 logger = logging.getLogger(__name__)
 
@@ -299,7 +299,7 @@ def draw_fc_dist_plot(FG, position_range=None):
         # TODO check that this is correct
         frag_df = frag_df[(frag_df["start_pos"] >= position_range[0]) & (frag_df["end_pos"] <= position_range[1])]
 
-    fig = ff.create_distplot([frag_df["FC"]], group_labels=["Fold Change"], )
+    fig = px.histogram(frag_df, x="FC", nbins=20, title="Fold Change Distribution", marginal="rug")
 
     return fig
 
