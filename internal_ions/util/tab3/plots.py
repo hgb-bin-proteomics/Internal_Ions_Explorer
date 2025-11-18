@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import logging
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
 
 logger = logging.getLogger(__name__)
 
@@ -271,13 +272,13 @@ def draw_fragment_coverage_matrix_difference_plotly(
     return fig
 
 
-# define the function draw_barplor_intensity_SDI, this function take a fragment graph object and a list of position ranges,
+# define the function draw_fc_dist_plot, this function take a fragment graph object and a list of position ranges,
 # if the position range is not provided, the function will plot the intensity of site determining ions automatically
 # for the peptidoform of peptidoform_index.
-# the site determine ions are ions of the sae position but whose mass are different across the peptidoforms
-def draw_barplot_intensity_SDI(FG, position_range=None):
+# the site determine ions are ions of the same position but whose mass are different across the peptidoforms
+def draw_fc_dist_plot(FG, position_range=None):
     """
-    This function draws a barplot of the intensity of site determining ions (SDI) for a given Fragment Graph object.
+    This function draws a distplot of intensity fold changes of site determining ions (SDI) for a given Fragment Graph object.
 
     Parameters:
     FG: Fragment Graph object
@@ -298,22 +299,7 @@ def draw_barplot_intensity_SDI(FG, position_range=None):
         # TODO check that this is correct
         frag_df = frag_df[(frag_df["start_pos"] >= position_range[0]) & (frag_df["end_pos"] <= position_range[1])]
 
-    # boxplot intensity as function of peptidoform index
-    fig = go.Figure(
-        data=[
-            go.Violin(y=frag_df["FC"],
-                name="FC",
-                marker_color="blue",
-            )
-        ]
-    )
-
-    # Update layout
-    # fig.update_layout(
-        # xaxis_title="Peptidoform Index",
-        # yaxis_title="Intensity",
-        # title="Barplot of Intensity SDI",
-    # )
+    fig = ff.create_distplot([frag_df["FC"]], group_labels=["Fold Change"], )
 
     return fig
 

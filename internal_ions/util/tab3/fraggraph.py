@@ -15,7 +15,7 @@ from ...fraggraph.frag_graph_viz import draw_graph3 as draw_graph
 from ...util.redirect import st_stdout
 from .plots import draw_fragment_coverage_matrix_plotly
 from .plots import draw_fragment_coverage_matrix_difference_plotly
-from .plots import draw_barplot_intensity_SDI
+from .plots import draw_fc_dist_plot
 
 from ...util.constants import DIV_COLOR
 
@@ -93,9 +93,9 @@ def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False) -
             st.markdown("**Fragment Coverage Matrix Difference:**")
             st.plotly_chart(diff_plot, use_container_width=False, height=500, width=500)
         with cols[1]:
-            sdi_plot = draw_barplot_intensity_SDI(fg)
-            st.markdown("**Violin plot of FC:**")
-            st.plotly_chart(sdi_plot, use_container_width=False, height=500, width=500)
+            fc_plot = draw_fc_dist_plot(fg)
+            st.markdown("**Distribution of fold changes:**")
+            st.plotly_chart(fc_plot, use_container_width=False, height=500, width=500)
 
     try:
         os.remove(output_name_prefix + "pyvis.html")
@@ -110,7 +110,7 @@ def main(argv=None) -> None:
     st.subheader("Fraggraph Results", divider=DIV_COLOR)
     # st.markdown("Description of results.")
 
-    params = argv
+    params = argv or {}
     params_keys = ["mzd", "cov", "pep1", "pep2"]
     for key in params_keys:
         if key not in params:
