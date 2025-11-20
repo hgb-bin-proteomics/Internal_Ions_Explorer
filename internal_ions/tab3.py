@@ -334,17 +334,17 @@ def main(argv=None) -> None:
                                      format="%0.2f",
                                      help="Minimum cosine similarity between fragment ion chromatograms to consider fragments as correlated.")
 
-        fg_run_l, fg_run_center, fg_run_r = st.columns(3)
 
+        fg_run_l, fg_run_center, fg_run_r = st.columns(3)
         with fg_run_center:
             run_fraggraph = st.button("Run Fraggraph!", type="primary", use_container_width=True)
 
-        if run_fraggraph:
-            fraggraph_main({"mzd": fg_mzd,
-                            "cov": fg_cov,
-                            "pep1": fg_peptidoform1,
-                            "pep2": fg_peptidoform2,
-                            "min_cosine": fg_min_cosine})
+        if "generated_fraggraph" in st.session_state or run_fraggraph:
+                fraggraph_main({"mzd": fg_mzd,
+                                "cov": fg_cov,
+                                "pep1": fg_peptidoform1,
+                                "pep2": fg_peptidoform2,
+                                "min_cosine": fg_min_cosine})
 
     else:
         st.error("No consensus spectrum available. Please check spectra selection and create a consensus spectrum first", icon="🚨")

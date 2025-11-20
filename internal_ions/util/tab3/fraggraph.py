@@ -1,7 +1,9 @@
+import pickle
 import os
 import shutil
 import random
 from datetime import datetime
+import tempfile
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -61,15 +63,15 @@ def create_fraggraph(peptidoforms: list[str], **kwargs) -> FragGraph:
 
 
 def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False, **kwargs) -> None:
-    fg = create_fraggraph(peptidoforms, **kwargs)
+    if "generated_fraggraph" not in st.session_state:
+        fg = create_fraggraph(peptidoforms, **kwargs)
+        st.session_state["generated_fraggraph"] = fg
+    else:
+        fg = st.session_state["generated_fraggraph"]
 
     # file storage handling
-    tmp_dir_name = "tmp_fragannot_files_653205774"
-    if os.path.exists(tmp_dir_name) and os.path.isdir(tmp_dir_name):
-        shutil.rmtree(tmp_dir_name)
-    os.makedirs(tmp_dir_name)
-
-    output_name_prefix = tmp_dir_name + "/" + datetime.now().strftime("%b-%d-%Y_%H-%M-%S") + "_" + str(random.randint(10000, 99999))
+    tmp_dir_name = tempfile.mkdtemp(prefix="tmp_fraggraph_files_", )
+    output_name_prefix = os.path.join(tmp_dir_name, datetime.now().strftime("%b-%d-%Y_%H-%M-%S") + "_" + str(random.randint(10000, 99999)))
 
     # visualizing the fragmentation graph
     draw_graph(fg, output_filename=output_name_prefix + "pyvis.html")
@@ -79,6 +81,12 @@ def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False, *
     st.subheader("Visualization of the fragmentation graph", divider=DIV_COLOR)
     # st.markdown("Description text")
     components.html(graph, width=900, height=900)
+    st.download_button(
+        label="Download the pickled graph object",
+        data=pickle.dumps(fg),
+        file_name="fraggraph_object.pkl",
+        mime="application/octet-stream",
+    )
 
     cols = st.columns(len(peptidoforms))
 
@@ -99,10 +107,10 @@ def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False, *
             st.plotly_chart(fc_plot, use_container_width=False, height=500, width=500)
 
     try:
-        os.remove(output_name_prefix + "pyvis.html")
+        os.rmdir(tmp_dir_name)
     except Exception:
         if verbose:
-            print("Could not remove file: " + output_name_prefix + "pyvis.html")
+            print("Could not remove directory: " + tmp_dir_name)
 
 
 def main(argv=None) -> None:
