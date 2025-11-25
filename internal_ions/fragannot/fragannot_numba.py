@@ -1,13 +1,13 @@
 # Dependencies
 import json
 import re
-from pyteomics import mass
+from pyteomics import mass, parser
 from itertools import tee
-from pyteomics import parser
 import ms_deisotope
+import logging
 
 # type hinting
-from typing import List, Dict, Any
+from typing import Any, Iterable
 from psm_utils.psm_list import PSMList
 from ..util.spectrumio import SpectrumFile
 from ..util import constants
@@ -21,6 +21,8 @@ import multiprocessing
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
+logger = logging.getLogger(__name__)
+
 
 class FragannotNumba:
     # set CPU cores here
@@ -32,11 +34,11 @@ class FragannotNumba:
             psms: PSMList,
             spectra_file: SpectrumFile,
             tolerance: float,
-            fragment_types: List[str],
-            charges: List[str],
-            losses: List[str],
+            fragment_types: list[str],
+            charges: list[str],
+            losses: list[str],
             deisotope: bool,
-            write_file: bool = True) -> List[Dict[str, Any]]:
+            write_file: bool = True):
 
         return fragment_annotation(psms, spectra_file, tolerance,
                                    fragment_types, charges, losses,
@@ -48,14 +50,14 @@ def fragment_annotation(
         psms: PSMList,
         spectra_file: SpectrumFile,
         tolerance: float,
-        fragment_types: List[str],
-        charges: List[str] | str,
-        losses: List[str],
+        fragment_types: list[str],
+        charges: list[str] | str,
+        losses: list[str],
         deisotope: bool,
         write_file: bool = True,
         nr_used_cores: int = 1,
         micro_batch: bool = True,
-        batch_size: int = 100) -> List[Dict[str, Any]]:
+        batch_size: int = 100):
     """
     Annotate theoretical and observed fragment ions in a spectra file.
 
@@ -141,10 +143,10 @@ def fragment_annotation(
 
 def calculate_ions_for_psms(psm,
                             tolerance: float,
-                            fragment_types: List[str],
-                            charges: List[str] | str,
-                            losses: List[str],
-                            deisotope: bool) -> Dict[str, Any]:
+                            fragment_types: list[str],
+                            charges: list[str] | str,
+                            losses: list[str],
+                            deisotope: bool) -> dict[str, Any]:
 
     if charges == "auto":  # if charges to consider not specified: use precursor charge as max charge
         pc = psm.get_precursor_charge()
@@ -200,7 +202,7 @@ def calculate_ions_for_psms(psm,
             "precursor_intensity": 666}
 
 
-def deisotope_peak_list(mzs: List[float], intensities: List[float]) -> List[List[float]]:
+def deisotope_peak_list(mzs: list[float], intensities: list[float]) -> tuple[list[float], list[float]]:
     peaks = ms_deisotope.deconvolution.utils.prepare_peaklist(zip(mzs, intensities))
     deconvoluted_peaks, targeted = ms_deisotope.deconvolute_peaks(
         peaks, averagine=ms_deisotope.peptide, scorer=ms_deisotope.MSDeconVFitter(10.0), verbose=True)
@@ -213,11 +215,11 @@ def deisotope_peak_list(mzs: List[float], intensities: List[float]) -> List[List
 @jit(nopython=True, cache=True)
 def compute_theoretical_fragments(
         sequence_length: int,
-        fragment_types: List[str],
-        charges: List[int] = [1],
-        neutral_losses: List[str] = [],
-        ion_directions: Dict[str, str] = {},
-        internal: bool = True) -> List[str]:
+        fragment_types: list[str],
+        charges: list[int] = [1],
+        neutral_losses: list[str] = [],
+        ion_directions: dict[str, str] = {},
+        internal: bool = True) -> list[str]:
 
     n_term_ions = [ion_type for ion_type in fragment_types if ion_directions[ion_type] == "n-term"]
     c_term_ions = [ion_type for ion_type in fragment_types if ion_directions[ion_type] == "c-term"]
@@ -257,7 +259,7 @@ def compute_theoretical_fragments(
 
     if internal:
         # internal fragments
-        internal = [
+        internal_frags = [
             f"{n_term_ion}:{c_term_ion}" for n_term_ion in n_term_ions for c_term_ion in c_term_ions
         ]
         internal_pos = [
@@ -268,7 +270,7 @@ def compute_theoretical_fragments(
         ]
         internal_frags = [
             f"{internal_ions}@{internal_positions}"
-            for internal_ions in internal
+            for internal_ions in internal_frags
             for internal_positions in internal_pos
         ]
 
@@ -342,10 +344,11 @@ def parse_fragment_code(fragment_code: str):
     return start, end, ion_cap_start, ion_cap_end, charge, formula
 
 
-def match_fragments(exp_mz, theo_frag, tolerance: float):
+RE_TERM = re.compile(r"^t:|:t")
 
-    theo_frag = [[k, v] for k, v in sorted(theo_frag.items(), key=lambda item: item[1])]
-    re_term = re.compile(r"^t:|:t")
+def match_fragments(exp_mz: Iterable[float], theo_frag_dict: dict[str, float], tolerance: float):
+
+    theo_frag = sorted(theo_frag_dict.items(), key=lambda item: item[1])  # sort by m/z
     iter_2, last_match = tee(iter(theo_frag))
 
     d = {}
@@ -369,15 +372,14 @@ def match_fragments(exp_mz, theo_frag, tolerance: float):
                 if not found:
                     iter_2, last_match = tee(iter_2)
                     found = True
-            else:
-                if found:
-                    break
+            elif found:
+                break
 
         fragment_theoretical_nmatch.append(len(d[i]))
 
         if d[i]:
             # sort by terminal first, then by m/z difference
-            d[i].sort(key=lambda frag: (not bool(re_term.search(frag[0])), frag[2]))
+            d[i].sort(key=lambda frag: (not RE_TERM.search(frag[0]), frag[2]))
             closest = d[i][0]
             fragment_theoretical_code.append(closest[0])
             fragment_theoretical_mz.append(closest[1])

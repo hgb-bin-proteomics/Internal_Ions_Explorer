@@ -593,7 +593,7 @@ class FragGraph(nx.DiGraph):
                 ioncaps[0],
                 ioncaps[1],
             )
-            # Is their an already existing intermediate 1 node with an mz within msms_tol:
+            # Is there an already existing intermediate 1 node with an mz within msms_tol:
 
             # Get the intermediate 1 nodes with the closest mz
             idx_closest_mz = np.argmin(np.abs(self.I_1_nodes_mz - frag_mz)) # SK

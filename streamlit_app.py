@@ -156,6 +156,7 @@ def main(argv=None) -> None:
         st.markdown(project_str)
 
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger("internal_ions").setLevel(logging.DEBUG)
 
     main_page()
 

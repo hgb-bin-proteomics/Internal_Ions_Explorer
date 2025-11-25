@@ -7,15 +7,14 @@ from .util.spectrumio import filter_spectra, read_spectrum_file, read_spectra
 from .util.tab3.plots import plot_consensus_spectrum
 from .util.tab3.plots import plot_spectra_chromatogram
 from .util.tab3.fraggraph import main as fraggraph_main
-
 from .util.constants import DIV_COLOR
 
-from typing import List
-from typing import Dict
-from typing import Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-def get_minmz(selection: Dict[str, Any]) -> float:
+def get_minmz(selection) -> float:
     if len(selection.selection.box) == 0:
         return 0.0
 
@@ -23,7 +22,7 @@ def get_minmz(selection: Dict[str, Any]) -> float:
     return min(box["y"])
 
 
-def get_maxmz(selection: Dict[str, Any]) -> float:
+def get_maxmz(selection) -> float:
     if len(selection.selection.box) == 0:
         return 10000.0
 
@@ -31,7 +30,7 @@ def get_maxmz(selection: Dict[str, Any]) -> float:
     return max(box["y"])
 
 
-def get_minrt(selection: Dict[str, Any], spectra) -> float:
+def get_minrt(selection, spectra) -> float:
     if len(selection.selection.box) == 0:
         return min([float(s["rt"]) for s in spectra["spectra"].values()])
 
@@ -39,7 +38,7 @@ def get_minrt(selection: Dict[str, Any], spectra) -> float:
     return min(box["x"])
 
 
-def get_maxrt(selection: Dict[str, Any], spectra) -> float:
+def get_maxrt(selection, spectra) -> float:
     if len(selection.selection.box) == 0:
         return max([float(s["rt"]) for s in spectra["spectra"].values()])
 
@@ -47,7 +46,7 @@ def get_maxrt(selection: Dict[str, Any], spectra) -> float:
     return max(box["x"])
 
 
-def get_selected_scan_numbers(scan_number_str: str) -> List[int]:
+def get_selected_scan_numbers(scan_number_str: str) -> list[int]:
     scan_nrs = set()
     for scan_nr in scan_number_str.split(","):
         if scan_nr.strip() != "":
@@ -65,9 +64,11 @@ def main(argv=None) -> None:
     st.subheader("Data Import", divider=DIV_COLOR)
 
     if st.session_state.get("uploaded_spectrum_file"):
+        logger.debug("Processing uploaded spectrum file from session state: %s", st.session_state.uploaded_spectrum_file.name)
         spectrum_file = read_spectrum_file(st.session_state.uploaded_spectrum_file)
         spectra = read_spectra(spectrum_file)
         st.success(f"Spectra from file \"{st.session_state.uploaded_spectrum_file.name}\" were successfully loaded!")
+        logger.debug("Finished processing spectrum file from session state: %s", st.session_state.uploaded_spectrum_file.name)
 
     ############################################################################
         st.subheader("Spectrum Selector", divider=DIV_COLOR)
@@ -106,14 +107,6 @@ def main(argv=None) -> None:
                                      help="The minimum rt.",
                                      key="min_rt_filter")
 
-            # max_charge = st.number_input("Select the maximum charge for a spectrum:",
-            #                              min_value = 1,
-            #                              max_value = 20,
-            #                              value = 4,
-            #                              step = 1,
-            #                              help = "The maximum charge.",
-            #                              key="max_charge_filter")
-
         with spec_sel_col2:
             last_scan = st.selectbox("Select the last scan number to analyze:",
                                      sorted(spectra["spectra"].keys()),
@@ -136,14 +129,6 @@ def main(argv=None) -> None:
                                      step=0.01,
                                      help="The maximum rt.",
                                      key="max_rt_filter")
-
-            # max_isotope = st.number_input("Select the maximum isotope for a spectrum:",
-            #                               min_value = 1,
-            #                               max_value = 20,
-            #                               value = 4,
-            #                               step = 1,
-            #                               help = "The maximum isotope.",
-            #                               key="max_isotope_filter")
 
         if "identifications" in st.session_state:
             st.success(f"Identifications from file \"{st.session_state['identifications']['name']}\" were successfully loaded!")
@@ -307,9 +292,8 @@ def main(argv=None) -> None:
                                            index=None,
                                            help="Specify a peptidoform to consider for generating the fragment graph, e.g. "
                                                 "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE.")
-            fg_peptidoform2 = st.selectbox("Optionally, specify a peptidoform to compare to:",
-                                           possible_peptidoforms,
-                                           index=None,
+            fg_peptidoform2 = st.text_input("Optionally, specify a peptidoform to compare to:",
+                                           value=None,
                                            help="Specify a peptidoform to compare the fragment graph of the first peptidoform to, e.g. "
                                                 "ARTKQTARKSTGGKAPRKQLATKAARKSAPAT[-79.966331]GGV[+79.966331]KKPHRYRPGTVALRE.")
 
@@ -322,9 +306,8 @@ def main(argv=None) -> None:
                                            help="Specify a peptidoform to consider for generating the fragment graph, e.g. "
                                                 "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE.")
 
-            fg_peptidoform2 = st.selectbox("Optionally, specify a peptidoform to compare to:",
-                                           possible_selection_values,
-                                           index=None,
+            fg_peptidoform2 = st.text_input("Optionally, specify a peptidoform to compare to:",
+                                           value=None,
                                            help="Specify a peptidoform to compare the fragment graph of the first peptidoform to, e.g. "
                                                 "ARTKQTARKSTGGKAPRKQLATKAARKSAPAT[-79.966331]GGV[+79.966331]KKPHRYRPGTVALRE.")
 
@@ -341,16 +324,28 @@ def main(argv=None) -> None:
                                                  "ARTKQTARKSTGGKAPRKQLATKAARKSAPAT[-79.966331]GGV[+79.966331]KKPHRYRPGTVALRE.",
                                             placeholder="ARTKQTARKSTGGKAPRKQLATKAARKSAPAT[-79.966331]GGV[+79.966331]KKPHRYRPGTVALRE")
 
-        fg_run_l, fg_run_center, fg_run_r = st.columns(3)
+        fg_min_cosine = st.number_input("Minimum cosine similarity for considering fragments:",
+                                     min_value=0.0,
+                                     max_value=1.0,
+                                     value=0.7,
+                                     step=0.01,
+                                     format="%0.2f",
+                                     help="Minimum cosine similarity between fragment ion chromatograms to consider fragments as correlated.")
 
-        with fg_run_center:
-            run_fraggraph = st.button("Run Fraggraph!", type="primary", use_container_width=True)
 
-        if run_fraggraph:
+        run_fraggraph = None
+        if "generated_fraggraph" not in st.session_state:
+            fg_run_l, fg_run_center, fg_run_r = st.columns(3)
+            with fg_run_center:
+                run_fraggraph = st.button("Run Fraggraph!", type="primary", use_container_width=True)
+
+        if "generated_fraggraph" in st.session_state or run_fraggraph:
+            st.session_state["generated_fraggraph"] = True
             fraggraph_main({"mzd": fg_mzd,
-                            "cov": fg_cov,
-                            "pep1": fg_peptidoform1,
-                            "pep2": fg_peptidoform2})
+                           "cov": fg_cov,
+                           "pep1": fg_peptidoform1,
+                           "pep2": fg_peptidoform2,
+                           "min_cosine": fg_min_cosine})
 
     else:
         st.error("No consensus spectrum available. Please check spectra selection and create a consensus spectrum first", icon="🚨")

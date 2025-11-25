@@ -1,7 +1,7 @@
 import json
 
 import streamlit as st
-
+import logging
 from .fragannot.fragannot_call import fragannot_call
 
 from .util.converter import JSONConverter
@@ -9,9 +9,9 @@ from .util.redirect import st_stdout
 from .util.spectrumio import read_spectrum_file
 from .util.psmio import read_identifications, read_id_file
 from .util.streamlit_utils import dataframe_to_csv_stream
-
 from .util.constants import DIV_COLOR, SUPPORTED_FILETYPES
 
+logger = logging.getLogger(__name__)
 
 def main(argv=None) -> None:
 
@@ -31,11 +31,14 @@ def main(argv=None) -> None:
 
     spectrum_file = None
     if uploaded_spectrum_file is not None:
+        logger.debug("Processing uploaded spectrum file: %s", uploaded_spectrum_file.name)
         with st.status("Reading spectra...") as spectra_reading_status:
             with st_stdout("info"):
                 spectrum_file = read_spectrum_file(uploaded_spectrum_file)
             st.success("Read all spectra successfully!")
             spectra_reading_status.update(label=f"Read all spectra from file {uploaded_spectrum_file.name} successfully!", state="complete")
+        logger.debug("Finished processing spectrum file: %s", uploaded_spectrum_file.name)
+
 
     identifications_file = st.file_uploader("Upload an identification file:",
                                             key="identifications_file",

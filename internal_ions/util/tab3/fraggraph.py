@@ -1,7 +1,9 @@
+import pickle
 import os
 import shutil
 import random
 from datetime import datetime
+import tempfile
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -15,13 +17,13 @@ from ...fraggraph.frag_graph_viz import draw_graph3 as draw_graph
 from ...util.redirect import st_stdout
 from .plots import draw_fragment_coverage_matrix_plotly
 from .plots import draw_fragment_coverage_matrix_difference_plotly
-from .plots import draw_barplot_intensity_SDI
+from .plots import draw_fc_dist_plot
 
 from ...util.constants import DIV_COLOR
 
 
-def create_fraggraph(peptidoforms):
-    with st.status("Generating the fragmention graph...") as fg_gen_status:
+def create_fraggraph(peptidoforms: list[str], **kwargs) -> FragGraph:
+    with st.status("Generating the fragmentation graph...") as fg_gen_status:
         with st_stdout("info"):
             start_ioncaps_types = st.session_state["selected_ions_cterm"]
             end_ioncaps_types = st.session_state["selected_ions_nterm"]
@@ -48,7 +50,8 @@ def create_fraggraph(peptidoforms):
                            monoisotopic=monoisotopic,
                            max_prec_charge=max_prec_charge,
                            max_isotope=max_isotope,
-                           charge_loss=charge_loss)
+                           charge_loss=charge_loss,
+                           **kwargs)
 
             fg.generate_graph(peptidoforms,
                               st.session_state["consensus_spectrum"]["mz_mean"],
@@ -59,16 +62,39 @@ def create_fraggraph(peptidoforms):
     return fg
 
 
-def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False) -> None:
-    fg = create_fraggraph(peptidoforms)
+def _fraggraph_cache_key(peptidoforms: list[str], **kwargs):
+    # Collect all relevant parameters that affect the graph
+    # You may need to add more parameters here if others affect the graph
+    # For demonstration, we include peptidoforms and fg_min_cosine (if present)
+    # and all session state parameters used in create_fraggraph
+    key_items = [
+        tuple(peptidoforms),
+        tuple(sorted(kwargs.items())),
+        tuple(st.session_state.get("selected_ions_cterm", [])),
+        tuple(st.session_state.get("selected_ions_nterm", [])),
+        st.session_state.get("tolerance", None),
+        st.session_state.get("deconvoluted_spectra", None),
+        st.session_state.get("charge_reduction", None),
+        st.session_state.get("max_charge_auto", None),
+        st.session_state.get("max_charge", None),
+        st.session_state.get("max_isotope_auto", None),
+        st.session_state.get("max_isotope", None),
+        # You may add more session state parameters if needed
+    ]
+    return str(key_items)
+
+
+def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False, **kwargs) -> None:
+    cache_key = _fraggraph_cache_key(peptidoforms, **kwargs)
+    if cache_key not in st.session_state:
+        fg = create_fraggraph(peptidoforms, **kwargs)
+        st.session_state[cache_key] = fg
+    else:
+        fg = st.session_state[cache_key]
 
     # file storage handling
-    tmp_dir_name = "tmp_fragannot_files_653205774"
-    if os.path.exists(tmp_dir_name) and os.path.isdir(tmp_dir_name):
-        shutil.rmtree(tmp_dir_name)
-    os.makedirs(tmp_dir_name)
-
-    output_name_prefix = tmp_dir_name + "/" + datetime.now().strftime("%b-%d-%Y_%H-%M-%S") + "_" + str(random.randint(10000, 99999))
+    tmp_dir_name = tempfile.mkdtemp(prefix="tmp_fraggraph_files_", )
+    output_name_prefix = os.path.join(tmp_dir_name, datetime.now().strftime("%b-%d-%Y_%H-%M-%S") + "_" + str(random.randint(10000, 99999)))
 
     # visualizing the fragmentation graph
     draw_graph(fg, output_filename=output_name_prefix + "pyvis.html")
@@ -78,6 +104,12 @@ def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False) -
     st.subheader("Visualization of the fragmentation graph", divider=DIV_COLOR)
     # st.markdown("Description text")
     components.html(graph, width=900, height=900)
+    st.download_button(
+        label="Download the pickled graph object",
+        data=pickle.dumps(fg),
+        file_name="fraggraph_object.pkl",
+        mime="application/octet-stream",
+    )
 
     cols = st.columns(len(peptidoforms))
 
@@ -88,19 +120,20 @@ def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False) -
             st.plotly_chart(frag_mat_plot, use_container_width=False, height=500, width=500)
 
     if len(peptidoforms) > 1:
-        diff_plot = draw_fragment_coverage_matrix_difference_plotly(fg)
-        st.markdown("**Fragment Coverage Matrix Difference:**")
-        st.plotly_chart(diff_plot, use_container_width=False, height=600, width=600)
-
-        sdi_plot = draw_barplot_intensity_SDI(fg)
-        st.markdown("**Barplot of Intensity SDI:**")
-        st.plotly_chart(sdi_plot, use_container_width=False, height=600, width=600)
+        with cols[0]:
+            diff_plot = draw_fragment_coverage_matrix_difference_plotly(fg)
+            st.markdown("**Fragment Coverage Matrix Difference:**")
+            st.plotly_chart(diff_plot, use_container_width=False, height=500, width=500)
+        with cols[1]:
+            fc_plot = draw_fc_dist_plot(fg)
+            st.markdown("**Distribution of fold changes:**")
+            st.plotly_chart(fc_plot, use_container_width=False, height=500, width=500)
 
     try:
-        os.remove(output_name_prefix + "pyvis.html")
+        shutil.rmtree(tmp_dir_name)
     except Exception:
         if verbose:
-            print("Could not remove file: " + output_name_prefix + "pyvis.html")
+            print("Could not remove directory: " + tmp_dir_name)
 
 
 def main(argv=None) -> None:
@@ -109,8 +142,8 @@ def main(argv=None) -> None:
     st.subheader("Fraggraph Results", divider=DIV_COLOR)
     # st.markdown("Description of results.")
 
-    params = argv
-    params_keys = ["mzd", "cov", "pep1", "pep2"]
+    params = argv or {}
+    params_keys = ["mzd", "cov", "pep1", "pep2", "min_cosine"]
     for key in params_keys:
         if key not in params:
             # this actually should never happen!
@@ -142,8 +175,8 @@ def main(argv=None) -> None:
         if params["pep1"] is None and params["pep2"] is None:
             st.error("Please select or provide at least one peptidoform/proteoform to run Fraggraph!", icon="🚨")
         elif params["pep1"] is None and params["pep2"] is not None:
-            single_or_double_fraggraph([params["pep2"]])
+            single_or_double_fraggraph([params["pep2"]], min_cosine_similarity=params["min_cosine"])
         elif params["pep2"] is None and params["pep1"] is not None:
-            single_or_double_fraggraph([params["pep1"]])
+            single_or_double_fraggraph([params["pep1"]], min_cosine_similarity=params["min_cosine"])
         else:
-            single_or_double_fraggraph([params["pep1"], params["pep2"]])
+            single_or_double_fraggraph([params["pep1"], params["pep2"]], min_cosine_similarity=params["min_cosine"])

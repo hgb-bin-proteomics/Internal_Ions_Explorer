@@ -1,8 +1,10 @@
-#!/usr/bin/env python3
-
 import numpy as np
 import pandas as pd
+import logging
 import plotly.graph_objects as go
+import plotly.express as px
+
+logger = logging.getLogger(__name__)
 
 
 def plot_spectrum(intensity_values, mz_values) -> go.Figure:
@@ -39,19 +41,10 @@ def plot_spectra_chromatogram(spectra: dict):
 
     fig = go.Figure()
 
-    # get the min and max intensity
-    intensity_array = [spectrum["precursor"][1] for spectrum in spectra.values() if spectrum["precursor"][1]]
+    max_intensity = max(s["max_intensity"] for s in spectra.values())
+    min_intensity = min(s["min_intensity"] for s in spectra.values())
 
-    # if no values, return empty figure
-    # if len(intensity_array) <= 0:
-    #     return fig
-
-    if intensity_array:
-        min_intensity = min(intensity_array)
-        max_intensity = max(intensity_array)
-    else:
-        min_intensity, max_intensity = 0, 1
-    print("min/max intensity: ", min_intensity, max_intensity)
+    logger.debug("min/max intensity: %f, %f", min_intensity, max_intensity)
     colorscale = [[0, 'blue'], [1, 'red']]  # Define your desired colorscale
 
     # check whether min and max intensity are the same
@@ -59,9 +52,18 @@ def plot_spectra_chromatogram(spectra: dict):
         min_intensity = 0
         max_intensity = 1
 
-    for scan_nr, spectrum in spectra.items():
-        # if spectrum["precursor"][1] is None:
-        #     continue
+    # reduce the amount of points plotted if there are more than 5000 spectra
+    if len(spectra) > 50000:
+        factor = 100
+    elif len(spectra) > 5000:
+        factor = 10
+    else:
+        factor = 1
+    logger.info("Reducing number of points plotted by a factor of %d to improve performance", factor)
+
+    for i, (scan_nr, spectrum) in enumerate(spectra.items(), 1):
+        if i % factor != 0:
+            continue
         intensity = spectrum["precursor"][1]
         if intensity is None:
             color = 0
@@ -157,26 +159,9 @@ def draw_fragment_coverage_matrix_plotly(
     return fig
 
 
-# fragment coverage matrix difference plotly
-def draw_fragment_coverage_matrix_difference_plotly(
-    FG,
-    peptidoform_index_1=0,
-    peptidoform_index_2=1,
-):
-    """
-    This function draws a fragment coverage matrix difference using plotly.
-
-    Parameters:
-    FG1: Fragment Graph object 1
-    FG2: Fragment Graph object 2
-    x (str): The column name to use for the intensity. Default is "intensity".
-    FG1_peptidoform_index (int): The index of the peptidoform to use for FG1. Default is 0.
-    FG2_peptidoform_index (int): The index of the peptidoform to use for FG2. Default is 0.
-
-    Returns:
-    plotly.graph_objects.Figure object if filename is None, else None.
-    """
-
+def fragment_coverage_matrix_difference(FG,
+                                        peptidoform_index_1=0,
+                                        peptidoform_index_2=1):
     # Extracting fragment data
     frag_df_1 = FG.get_fragment_table_I0(peptidoform_index=peptidoform_index_1)
     frag_df_2 = FG.get_fragment_table_I0(peptidoform_index=peptidoform_index_2)
@@ -196,6 +181,15 @@ def draw_fragment_coverage_matrix_difference_plotly(
         suffixes=("_1", "_2"),
     )
 
+    # log missing value information
+    missing_1 = frag_df["intensity_1"].isna()
+    missing_2 = frag_df["intensity_2"].isna()
+    logger.debug("Missing values in intensity_1: %d", missing_1.sum())
+    logger.debug("Missing values in intensity_2: %d", missing_2.sum())
+    logger.debug("Missing values in both: %d", (missing_1 & missing_2).sum())
+    logger.debug("Not missing: %d", (~missing_1 & ~missing_2).sum())
+    logger.debug("No change: %d", (frag_df["intensity_1"] == frag_df["intensity_2"]).sum())
+
     # Handling missing values
     frag_df["intensity_1"] = frag_df["intensity_1"].fillna(1)
     frag_df["intensity_2"] = frag_df["intensity_2"].fillna(1)
@@ -213,6 +207,34 @@ def draw_fragment_coverage_matrix_difference_plotly(
     frag_df.loc[
         (frag_df["intensity_2"] > 1) & (frag_df["intensity_1"] == 1), "FC"
     ] = 10
+
+    logger.debug("Special cases set to -10: %d", (frag_df["FC"] == -10).sum())
+    logger.debug("Special cases set to 10: %d", (frag_df["FC"] == 10).sum())
+
+    return frag_df
+
+
+# fragment coverage matrix difference plotly
+def draw_fragment_coverage_matrix_difference_plotly(
+    FG,
+    peptidoform_index_1=0,
+    peptidoform_index_2=1,
+):
+    """
+    Draws a fragment coverage matrix difference using plotly.
+
+    Parameters:
+        FG: Fragment Graph object containing fragment coverage data.
+        peptidoform_index_1 (int): Index of the first peptidoform to compare. Default is 0.
+        peptidoform_index_2 (int): Index of the second peptidoform to compare. Default is 1.
+
+    Returns:
+        plotly.graph_objects.Figure: The resulting heatmap figure.
+    """
+
+    frag_df = fragment_coverage_matrix_difference(
+        FG, peptidoform_index_1, peptidoform_index_2
+    )
 
     # # Annotations
     # frag_df["annotation"] = frag_df["FC"].apply(
@@ -248,13 +270,13 @@ def draw_fragment_coverage_matrix_difference_plotly(
     return fig
 
 
-# define the function draw_barplor_intensity_SDI, this function take a fragment graph object and a list of position ranges,
+# define the function draw_fc_dist_plot, this function take a fragment graph object and a list of position ranges,
 # if the position range is not provided, the function will plot the intensity of site determining ions automatically
 # for the peptidoform of peptidoform_index.
-# the site determine ions are ions of the sae position but whose mass are different across the peptidoforms
-def draw_barplot_intensity_SDI(FG, position_range=None):
+# the site determining ions are ions of the same position but whose mass are different across the peptidoforms
+def draw_fc_dist_plot(FG, position_range=None):
     """
-    This function draws a barplot of the intensity of site determining ions (SDI) for a given Fragment Graph object.
+    This function draws a distplot of intensity fold changes of site determining ions (SDI) for a given Fragment Graph object.
 
     Parameters:
     FG: Fragment Graph object
@@ -265,33 +287,17 @@ def draw_barplot_intensity_SDI(FG, position_range=None):
     """
 
     # Get fragment table I0 from FG (assuming it returns a DataFrame)
-    frag_df = FG.get_all_fragment_table_I0()
+    # frag_df = FG.get_all_fragment_table_I0()
+    frag_df = fragment_coverage_matrix_difference(FG)
 
     if position_range is None:
-        frag_df = frag_df.drop_duplicates(subset=["start_pos", "end_pos", "mz"], keep=False)
+        frag_df = frag_df.drop_duplicates(subset=["start_pos", "end_pos", "mz_1", "mz_2"], keep=False)
     else:
         # use the position ranges to filter the fragment table
         # TODO check that this is correct
         frag_df = frag_df[(frag_df["start_pos"] >= position_range[0]) & (frag_df["end_pos"] <= position_range[1])]
 
-    # boxplot intensiyt in fucntion of peptidoform index
-    fig = go.Figure(
-        data=[
-            go.Box(
-                y=frag_df["intensity"],
-                x=frag_df["peptidoform_index"],
-                name="Intensity",
-                marker_color="blue",
-            )
-        ]
-    )
-
-    # Update layout
-    fig.update_layout(
-        xaxis_title="Peptidoform Index",
-        yaxis_title="Intensity",
-        title="Barplot of Intensity SDI",
-    )
+    fig = px.histogram(frag_df, x="FC", nbins=20, title="Fold Change Distribution", marginal="rug")
 
     return fig
 
