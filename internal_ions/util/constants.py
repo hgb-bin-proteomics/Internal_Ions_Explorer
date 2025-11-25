@@ -1,4 +1,5 @@
 from pyteomics import mass
+import logging
 
 from psm_utils.io import FILETYPES
 SUPPORTED_FILETYPES = list(FILETYPES)
@@ -7,11 +8,20 @@ REPO_NAME = "internal_ions"
 DIV_COLOR = "rainbow"
 FRAGANNOT_ION_NAMES = ["a", "b", "c", "cdot", "c-1", "c+1", "x", "y", "z", "zdot", "z+1", "z+2", "z+3"]
 
-ion_comp = mass.std_ion_comp.copy()
+logger = logging.getLogger(__name__)
+
+
+class HashableComp(mass.Composition):
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
+
+ion_comp = {key: HashableComp(val) for (key, val) in mass.std_ion_comp.items()}
+
 for k in list(ion_comp):
     if k.endswith('dot'):
         ion_comp[k.replace('-', '')] = ion_comp.pop(k)
-ion_comp['t'] = {}
+ion_comp['t'] = HashableComp({})
 
 ion_cap_delta_mass = {
     name: mass.calculate_mass(composition=comp, absolute=False) for (name, comp) in ion_comp.items()
@@ -32,6 +42,28 @@ ion_direction = {
     "z+2": "c-term",
     "z+3": "c-term",
 }
+
+
+def _identical_internal_ions() -> dict[tuple[str, str], tuple[str, str]]:
+    nterm = [key for key, val in ion_direction.items() if val == "n-term"]
+    cterm = [key for key, val in ion_direction.items() if val == "c-term"]
+    internal_ion_comps = {}
+    ion_mapping = {}
+    for n in nterm:
+        for c in cterm:
+            internal_ion_comps.setdefault((ion_comp[n] + ion_comp[c]), []).append((n, c))
+    for values in internal_ion_comps.values():
+        values.sort(key=lambda x: len(x[0]) + len(x[1]))
+        for v in values:
+            ion_mapping[v] = values[0]
+    return ion_mapping
+
+IDENTICAL_INTERNAL_IONS = _identical_internal_ions()
+
+for key, val in IDENTICAL_INTERNAL_IONS.items():
+    if key != val:
+        logger.debug(f"Identical internal ions: {key} -> {val}")
+
 
 
 # ---------------------------------------------------------------------------- #

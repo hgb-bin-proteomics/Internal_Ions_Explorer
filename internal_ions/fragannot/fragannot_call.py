@@ -1,7 +1,5 @@
 from .fragannot_numba import FragannotNumba
 
-from typing import Dict
-from typing import List
 from ..util.spectrumio import SpectrumFile
 from psm_utils.psm_list import PSMList
 
@@ -9,17 +7,18 @@ from psm_utils.psm_list import PSMList
 def fragannot_call(spectrum_file: SpectrumFile,
                    psms: PSMList,
                    tolerance: float,
-                   fragment_types: List[str],
-                   charges: List[str],
-                   losses: List[str],
+                   nterm_fragment_types: list[str],
+                   cterm_fragment_types: list[str],
+                   charges: list[str],
+                   losses: list[str],
                    deisotope: bool,
-                   verbose: bool = False) -> Dict:
-
+                   verbose: bool = False) -> dict:
     frag = FragannotNumba()
     fragannot_dict = frag.fragment_annotation(psms,
                                               spectrum_file,
                                               tolerance,
-                                              fragment_types,
+                                              nterm_fragment_types,
+                                              cterm_fragment_types,
                                               charges,
                                               losses,
                                               deisotope,
