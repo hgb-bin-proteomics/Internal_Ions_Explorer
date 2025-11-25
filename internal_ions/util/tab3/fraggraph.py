@@ -23,7 +23,7 @@ from ...util.constants import DIV_COLOR
 
 
 def create_fraggraph(peptidoforms: list[str], **kwargs) -> FragGraph:
-    with st.status("Generating the fragmention graph...") as fg_gen_status:
+    with st.status("Generating the fragmentation graph...") as fg_gen_status:
         with st_stdout("info"):
             start_ioncaps_types = st.session_state["selected_ions_cterm"]
             end_ioncaps_types = st.session_state["selected_ions_nterm"]
@@ -107,7 +107,7 @@ def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False, *
             st.plotly_chart(fc_plot, use_container_width=False, height=500, width=500)
 
     try:
-        os.rmdir(tmp_dir_name)
+        shutil.rmtree(tmp_dir_name)
     except Exception:
         if verbose:
             print("Could not remove directory: " + tmp_dir_name)

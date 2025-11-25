@@ -221,17 +221,15 @@ def draw_fragment_coverage_matrix_difference_plotly(
     peptidoform_index_2=1,
 ):
     """
-    This function draws a fragment coverage matrix difference using plotly.
+    Draws a fragment coverage matrix difference using plotly.
 
     Parameters:
-    FG1: Fragment Graph object 1
-    FG2: Fragment Graph object 2
-    x (str): The column name to use for the intensity. Default is "intensity".
-    FG1_peptidoform_index (int): The index of the peptidoform to use for FG1. Default is 0.
-    FG2_peptidoform_index (int): The index of the peptidoform to use for FG2. Default is 0.
+        FG: Fragment Graph object containing fragment coverage data.
+        peptidoform_index_1 (int): Index of the first peptidoform to compare. Default is 0.
+        peptidoform_index_2 (int): Index of the second peptidoform to compare. Default is 1.
 
     Returns:
-    plotly.graph_objects.Figure object if filename is None, else None.
+        plotly.graph_objects.Figure: The resulting heatmap figure.
     """
 
     frag_df = fragment_coverage_matrix_difference(
@@ -275,7 +273,7 @@ def draw_fragment_coverage_matrix_difference_plotly(
 # define the function draw_fc_dist_plot, this function take a fragment graph object and a list of position ranges,
 # if the position range is not provided, the function will plot the intensity of site determining ions automatically
 # for the peptidoform of peptidoform_index.
-# the site determine ions are ions of the same position but whose mass are different across the peptidoforms
+# the site determining ions are ions of the same position but whose mass are different across the peptidoforms
 def draw_fc_dist_plot(FG, position_range=None):
     """
     This function draws a distplot of intensity fold changes of site determining ions (SDI) for a given Fragment Graph object.

@@ -98,10 +98,7 @@ def read_spectra(file: SpectrumFile) -> dict:
         spectrum_dict["rt"] = spectrum["params"].get("rtinseconds", 0.0)
         spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"]))
         spectrum_dict["min_intensity"] = float(min(spectrum["intensity array"]))
-        # peaks = {}
-        # for i, mz in enumerate(spectrum["m/z array"]):
-        #     peaks[mz] = spectrum["intensity array"][i]
-        # spectrum_dict["peaks"] = peaks
+
         result_dict[scan_nr] = spectrum_dict
 
     return {"name": file.name, "spectra": result_dict}

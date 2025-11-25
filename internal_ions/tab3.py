@@ -10,7 +10,7 @@ from .util.tab3.fraggraph import main as fraggraph_main
 
 from .util.constants import DIV_COLOR
 
-from typing import List, Dict, Any
+from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -340,11 +340,11 @@ def main(argv=None) -> None:
             run_fraggraph = st.button("Run Fraggraph!", type="primary", use_container_width=True)
 
         if "generated_fraggraph" in st.session_state or run_fraggraph:
-                fraggraph_main({"mzd": fg_mzd,
-                                "cov": fg_cov,
-                                "pep1": fg_peptidoform1,
-                                "pep2": fg_peptidoform2,
-                                "min_cosine": fg_min_cosine})
+            fraggraph_main({"mzd": fg_mzd,
+                           "cov": fg_cov,
+                           "pep1": fg_peptidoform1,
+                           "pep2": fg_peptidoform2,
+                           "min_cosine": fg_min_cosine})
 
     else:
         st.error("No consensus spectrum available. Please check spectra selection and create a consensus spectrum first", icon="🚨")
