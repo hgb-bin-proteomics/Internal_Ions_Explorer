@@ -7,10 +7,8 @@ from .util.spectrumio import filter_spectra, read_spectrum_file, read_spectra
 from .util.tab3.plots import plot_consensus_spectrum
 from .util.tab3.plots import plot_spectra_chromatogram
 from .util.tab3.fraggraph import main as fraggraph_main
-
 from .util.constants import DIV_COLOR
 
-from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -48,7 +46,7 @@ def get_maxrt(selection, spectra) -> float:
     return max(box["x"])
 
 
-def get_selected_scan_numbers(scan_number_str: str) -> List[int]:
+def get_selected_scan_numbers(scan_number_str: str) -> list[int]:
     scan_nrs = set()
     for scan_nr in scan_number_str.split(","):
         if scan_nr.strip() != "":
@@ -335,11 +333,14 @@ def main(argv=None) -> None:
                                      help="Minimum cosine similarity between fragment ion chromatograms to consider fragments as correlated.")
 
 
-        fg_run_l, fg_run_center, fg_run_r = st.columns(3)
-        with fg_run_center:
-            run_fraggraph = st.button("Run Fraggraph!", type="primary", use_container_width=True)
+        run_fraggraph = None
+        if "generated_fraggraph" not in st.session_state:
+            fg_run_l, fg_run_center, fg_run_r = st.columns(3)
+            with fg_run_center:
+                run_fraggraph = st.button("Run Fraggraph!", type="primary", use_container_width=True)
 
         if "generated_fraggraph" in st.session_state or run_fraggraph:
+            st.session_state["generated_fraggraph"] = True
             fraggraph_main({"mzd": fg_mzd,
                            "cov": fg_cov,
                            "pep1": fg_peptidoform1,

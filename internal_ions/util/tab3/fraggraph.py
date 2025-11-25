@@ -62,12 +62,35 @@ def create_fraggraph(peptidoforms: list[str], **kwargs) -> FragGraph:
     return fg
 
 
+def _fraggraph_cache_key(peptidoforms: list[str], **kwargs):
+    # Collect all relevant parameters that affect the graph
+    # You may need to add more parameters here if others affect the graph
+    # For demonstration, we include peptidoforms and fg_min_cosine (if present)
+    # and all session state parameters used in create_fraggraph
+    key_items = [
+        tuple(peptidoforms),
+        tuple(sorted(kwargs.items())),
+        tuple(st.session_state.get("selected_ions_cterm", [])),
+        tuple(st.session_state.get("selected_ions_nterm", [])),
+        st.session_state.get("tolerance", None),
+        st.session_state.get("deconvoluted_spectra", None),
+        st.session_state.get("charge_reduction", None),
+        st.session_state.get("max_charge_auto", None),
+        st.session_state.get("max_charge", None),
+        st.session_state.get("max_isotope_auto", None),
+        st.session_state.get("max_isotope", None),
+        # You may add more session state parameters if needed
+    ]
+    return str(key_items)
+
+
 def single_or_double_fraggraph(peptidoforms: list[str], verbose: bool = False, **kwargs) -> None:
-    if "generated_fraggraph" not in st.session_state:
+    cache_key = _fraggraph_cache_key(peptidoforms, **kwargs)
+    if cache_key not in st.session_state:
         fg = create_fraggraph(peptidoforms, **kwargs)
-        st.session_state["generated_fraggraph"] = fg
+        st.session_state[cache_key] = fg
     else:
-        fg = st.session_state["generated_fraggraph"]
+        fg = st.session_state[cache_key]
 
     # file storage handling
     tmp_dir_name = tempfile.mkdtemp(prefix="tmp_fraggraph_files_", )
