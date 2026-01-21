@@ -16,6 +16,13 @@ from .util.tab2.plots import rel_ion_intens_ridge
 from .util.tab2.plots import per_spec_ion_type
 from .util.tab2.plots import per_spec_ion_intens
 from .util.tab2.plots import logo_of_fraction
+from .util.tab2.plots2 import proportional_distribution_of_mz_values
+from .util.tab2.plots2 import first_residue_of_internal_and_terminal_ions
+from .util.tab2.plots2 import last_residue_of_internal_and_terminal_ions
+from .util.tab2.plots2 import density_plot_of_the_length_of_the_top_1_internal_ion
+from .util.tab2.plots2 import density_plot_of_the_length_of_the_top_2_internal_ion
+from .util.tab2.plots2 import density_plot_of_the_length_of_the_top_3_internal_ion
+from .util.tab2.plots2 import density_plot_of_the_length_of_the_top_internal_ions
 
 from .util.constants import DIV_COLOR
 
@@ -118,6 +125,25 @@ def main(argv=None) -> None:
                 st.plotly_chart(rel_ion_intens_ridge(st.session_state["frag_center_filtered"]), use_container_width=True)
                 st.markdown("**Figure 5:** Distribution of log-transformed intensities relative to their respective scales.")
 
+            frag_center_plot_col4_1, frag_center_plot_col4_2 = st.columns(2)
+
+            with frag_center_plot_col4_1:
+                st.markdown("**Proportional Distribution of m/z Values**")
+                st.plotly_chart(proportional_distribution_of_mz_values(st.session_state["frag_center_filtered"]), use_container_width=True)
+                st.markdown("**Figure 6:** Proportional Distribution of m/z Values (Bin Size = 100).")
+
+            with frag_center_plot_col4_2:
+                st.markdown("**First residue of internal and terminal ions**")
+                st.plotly_chart(first_residue_of_internal_and_terminal_ions(st.session_state["frag_center_filtered"]), use_container_width=True)
+                st.markdown("**Figure 7:** First residue of internal and terminal ions.")
+
+            frag_center_plot_col5_1, frag_center_plot_col5_2 = st.columns(2)
+
+            with frag_center_plot_col5_1:
+                st.markdown("**Last residue of internal and terminal ions**")
+                st.plotly_chart(last_residue_of_internal_and_terminal_ions(st.session_state["frag_center_filtered"]), use_container_width=True)
+                st.markdown("**Figure 8:** Last residue of internal and terminal ions.")
+
     ############################################################################
             st.subheader("Spectrum-centric Statistics", divider=DIV_COLOR)
             st.markdown("Spectrum-centric stats description.")
@@ -127,12 +153,36 @@ def main(argv=None) -> None:
             with spec_center_plot_col1_1:
                 st.markdown("**Ion Type Distribution Per Spectra**")
                 st.plotly_chart(per_spec_ion_type(st.session_state["spec_center_filtered"]), use_container_width=True)
-                st.markdown("**Figure 6:** Distribution of ion types within each spectrum, providing insights into the diversity and abundance of ions detected across the dataset.")
+                st.markdown("**Figure 9:** Distribution of ion types within each spectrum, providing insights into the diversity and abundance of ions detected across the dataset.")
 
             with spec_center_plot_col1_2:
                 st.markdown("**Log Intensities:**")
                 st.plotly_chart(per_spec_ion_intens(st.session_state["spec_center_filtered"]), use_container_width=True)
-                st.markdown("**Figure 7:** Distribution of log-transformed intensities.")
+                st.markdown("**Figure 10:** Distribution of log-transformed intensities.")
+
+            spec_center_plot_col2_1, spec_center_plot_col2_2 = st.columns(2)
+
+            with spec_center_plot_col2_1:
+                st.markdown("**Plot of the length of the top 1 internal ion**")
+                st.plotly_chart(density_plot_of_the_length_of_the_top_1_internal_ion(st.session_state["spec_center_filtered"]), use_container_width=True)
+                st.markdown("**Figure 11:** Plot of the length of the top 1 internal ion.")
+
+            with spec_center_plot_col2_2:
+                st.markdown("**Plot of the length of the top 2 internal ion:**")
+                st.plotly_chart(density_plot_of_the_length_of_the_top_2_internal_ion(st.session_state["spec_center_filtered"]), use_container_width=True)
+                st.markdown("**Figure 12:** Plot of the length of the top 2 internal ion.")
+
+            spec_center_plot_col3_1, spec_center_plot_col3_2 = st.columns(2)
+
+            with spec_center_plot_col3_1:
+                st.markdown("**Plot of the length of the top 3 internal ion**")
+                st.plotly_chart(density_plot_of_the_length_of_the_top_3_internal_ion(st.session_state["spec_center_filtered"]), use_container_width=True)
+                st.markdown("**Figure 13:** Plot of the length of the top 3 internal ion.")
+
+            with spec_center_plot_col3_2:
+                st.markdown("**Plot of the length of the top internal ions:**")
+                st.plotly_chart(density_plot_of_the_length_of_the_top_internal_ions(st.session_state["spec_center_filtered"]), use_container_width=True)
+                st.markdown("**Figure 14:** Plot of the length of the top internal ions.")
 
             st.markdown("**Logo view of internal fragments:**")
             with st.expander("Expand for changing logo view options."):
