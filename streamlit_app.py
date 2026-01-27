@@ -8,7 +8,7 @@ import logging
 from internal_ions import tab1, tab2, tab3, tab4
 
 # import constants
-from internal_ions.util.constants import REPO_NAME, DIV_COLOR
+from internal_ions.util.constants import REPO_OWNER, REPO_NAME, DIV_COLOR
 
 
 # main page content
@@ -43,8 +43,8 @@ def main(argv=None) -> None:
                        page_icon=":test_tube:",
                        layout="wide",
                        initial_sidebar_state="expanded",
-                       menu_items={"Get Help": f"https://github.com/michabirklbauer/{REPO_NAME}/discussions",
-                                   "Report a bug": f"https://github.com/michabirklbauer/{REPO_NAME}/issues",
+                       menu_items={"Get Help": f"https://github.com/{REPO_OWNER}/{REPO_NAME}/discussions",
+                                   "Report a bug": f"https://github.com/{REPO_OWNER}/{REPO_NAME}/issues",
                                    "About": about_str}
                        )
 
@@ -152,7 +152,7 @@ def main(argv=None) -> None:
         license_str = "**License:** [???]()"
         st.markdown(license_str)
 
-        project_str = f"**Project Page:** [GitHub](https://github.com/michabirklbauer/{REPO_NAME}/)"
+        project_str = f"**Project Page:** [GitHub](https://github.com/{REPO_OWNER}/{REPO_NAME}/)"
         st.markdown(project_str)
 
     logging.basicConfig(level=logging.INFO)

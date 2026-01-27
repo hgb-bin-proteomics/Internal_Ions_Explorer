@@ -3,7 +3,8 @@ from pyteomics import mass
 from psm_utils.io import FILETYPES
 SUPPORTED_FILETYPES = list(FILETYPES)
 
-REPO_NAME = "internal_ions"
+REPO_OWNER = "hgb-bin-proteomics"
+REPO_NAME = "Internal_Ions_Explorer"
 DIV_COLOR = "rainbow"
 FRAGANNOT_ION_NAMES = ["a", "b", "c", "cdot", "c-1", "c+1", "x", "y", "z", "zdot", "z+1", "z+2", "z+3"]
 
