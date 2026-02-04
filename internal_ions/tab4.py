@@ -21,4 +21,4 @@ def main(argv=None) -> None:
         ext_docs = st.link_button("Read full documentation!",
                                   url = "https://internal-ions.vercel.app/",
                                   type = "primary",
-                                  use_container_width = True)
+                                  width = "stretch")

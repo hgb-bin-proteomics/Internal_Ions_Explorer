@@ -1,4 +1,5 @@
 import json
+import numpy as np
 
 import streamlit as st
 import logging
@@ -96,13 +97,13 @@ def main(argv=None) -> None:
         if st.session_state["sidebar_disabled"]:
             enable_sidebar = st.button("Re-enable upload and parameter selection!",
                                        type="secondary",
-                                       use_container_width=True)
+                                       width="stretch")
             if enable_sidebar:
                 st.session_state["sidebar_disabled"] = False
                 st.rerun()
         run_analysis = st.button("Load files and run Fragannot!",
                                  type="primary",
-                                 use_container_width=True)
+                                 width="stretch")
 
     if run_analysis:
         st.session_state["sidebar_disabled"] = True
@@ -136,7 +137,7 @@ def main(argv=None) -> None:
 
                         converter = JSONConverter()
                         st.session_state["result"] = result
-                        st.session_state["dataframes"] = converter.to_dataframes(data=result)
+                        st.session_state["dataframes"] = [df.replace(r'^\s*$', np.nan, regex=True) for df in converter.to_dataframes(data=result)]
                         st.session_state["dataframes_source"] = {"spectrum_file": spectrum_file.name,
                                                                  "identifications_file": st.session_state.identifications_file.name,
                                                                  "fragment_centric_csv": None,
@@ -160,9 +161,9 @@ def main(argv=None) -> None:
     if "dataframes" in st.session_state:
         st.subheader("Results Preview", divider=DIV_COLOR)
         st.markdown("Fragment-centric")
-        st.dataframe(st.session_state["dataframes"][0].head(10), use_container_width=True)
+        st.dataframe(st.session_state["dataframes"][0].head(10), width="stretch")
         st.markdown("Spectrum-centric")
-        st.dataframe(st.session_state["dataframes"][1].head(10), use_container_width=True)
+        st.dataframe(st.session_state["dataframes"][1].head(10), width="stretch")
 
         st.subheader("Download Results", divider=DIV_COLOR)
 
@@ -175,7 +176,7 @@ def main(argv=None) -> None:
                                mime="text/csv",
                                help="Download fragment-centric Fragannot results in .csv format.",
                                type="primary",
-                               use_container_width=True)
+                               width="stretch")
         with dl_center:
             st.download_button(label="Download Spectrum-centric data!",
                                data=dataframe_to_csv_stream(st.session_state["dataframes"][1]),
@@ -183,7 +184,7 @@ def main(argv=None) -> None:
                                mime="text/csv",
                                help="Download spectrum-centric Fragannot results in .csv format.",
                                type="primary",
-                               use_container_width=True)
+                               width="stretch")
 
         if "result" in st.session_state:
             with dl_r1:
@@ -193,4 +194,4 @@ def main(argv=None) -> None:
                                    mime="text/json",
                                    help="Download raw Fragannot results in .json file format.",
                                    type="primary",
-                                   use_container_width=True)
+                                   width="stretch")

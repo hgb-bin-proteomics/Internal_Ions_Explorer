@@ -1,6 +1,6 @@
 # Dockerfile for Internal Ion Explorer
 # author: Micha Birklbauer
-# version: 1.2.2
+# version: 1.3.0
 
 FROM python:3.12
 
@@ -10,10 +10,11 @@ RUN mkdir internal_ions
 COPY ./ internal_ions/
 WORKDIR internal_ions
 
-RUN python3 -m venv venv && \
-    . venv/bin/activate && \
-    pip install --upgrade pip && \
-    pip install --upgrade setuptools && \
-    pip install --no-cache-dir -r env.txt
+RUN pip install --upgrade pip
+RUN pip install --upgrade setuptools
+RUN pip install --no-cache-dir uv
 
-CMD  ["sh", "-c", ". venv/bin/activate && streamlit run streamlit_app.py"]
+RUN uv sync
+RUN uv cache clean
+
+CMD  ["sh", "-c", "uv run -- streamlit run streamlit_app.py"]
