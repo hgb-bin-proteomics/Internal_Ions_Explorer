@@ -1,4 +1,5 @@
 import json
+import numpy as np
 
 import streamlit as st
 import logging
@@ -136,7 +137,7 @@ def main(argv=None) -> None:
 
                         converter = JSONConverter()
                         st.session_state["result"] = result
-                        st.session_state["dataframes"] = converter.to_dataframes(data=result)
+                        st.session_state["dataframes"] = [df.replace(r'^\s*$', np.nan, regex=True) for df in converter.to_dataframes(data=result)]
                         st.session_state["dataframes_source"] = {"spectrum_file": spectrum_file.name,
                                                                  "identifications_file": st.session_state.identifications_file.name,
                                                                  "fragment_centric_csv": None,
