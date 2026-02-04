@@ -93,7 +93,7 @@ def main(argv=None) -> None:
         st.markdown("Here are some common selections for HCD/ETD/etc...")
         st.dataframe(pd.DataFrame({"Method": ["HCD", "ETD"], "Ions": ["b, y", "c, z"]}),
                      hide_index=True,
-                     use_container_width=True)
+                     width="stretch")
 
         # Non deconvoluted spectra
         st.markdown("----")
