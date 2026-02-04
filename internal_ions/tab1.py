@@ -72,7 +72,7 @@ def main(argv=None) -> None:
         else:
             st.warning("Please upload a spectrum file before the identifications file!", icon="⚠️")
 
-    st.session_state["fragannot_call_ion_selection"] = st.session_state["selected_ions_nterm"] + st.session_state["selected_ions_cterm"]
+    # st.session_state["fragannot_call_ion_selection"] = st.session_state["selected_ions_nterm"] + st.session_state["selected_ions_cterm"]
 
     charges_str = st.text_input("Charges to consider [comma delimited]:",
                                 value="+1",
@@ -119,7 +119,7 @@ def main(argv=None) -> None:
             run_info_str = f"\tSpectrum file name: {spectrum_file.name}\n" + \
                            f"\tIdentifications file name: {st.session_state.identifications_file.name}\n" + \
                            f"\tTolerance: {st.session_state.tolerance}\n" + \
-                           f"\tSelected ions: {', '.join(st.session_state['fragannot_call_ion_selection'])}\n" + \
+                           f"\tSelected ions: {', '.join(st.session_state['selected_ions_nterm'] + st.session_state['selected_ions_cterm'])}\n" + \
                            f"\tCharges: {', '.join(st.session_state['charges'])}\n" + \
                            f"\tLosses: {', '.join(st.session_state['losses'])}\n" + \
                            f"\tDeisotope: {st.session_state.deisotope}"
@@ -130,7 +130,8 @@ def main(argv=None) -> None:
                         result = fragannot_call(spectrum_file,
                                                 psm_list,
                                                 float(st.session_state.tolerance),
-                                                st.session_state["fragannot_call_ion_selection"],
+                                                st.session_state["selected_ions_nterm"],
+                                                st.session_state["selected_ions_cterm"],
                                                 st.session_state["charges"],
                                                 st.session_state["losses"],
                                                 st.session_state.deisotope)

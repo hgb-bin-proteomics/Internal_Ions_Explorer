@@ -2,7 +2,7 @@
 import json
 import re
 from pyteomics import mass, parser
-from itertools import tee
+from itertools import tee, product
 import ms_deisotope
 import logging
 
@@ -34,14 +34,15 @@ class FragannotNumba:
             psms: PSMList,
             spectra_file: SpectrumFile,
             tolerance: float,
-            fragment_types: list[str],
+            nterm_fragment_types: list[str],
+            cterm_fragment_types: list[str],
             charges: list[str],
             losses: list[str],
             deisotope: bool,
             write_file: bool = True):
 
         return fragment_annotation(psms, spectra_file, tolerance,
-                                   fragment_types, charges, losses,
+                                   nterm_fragment_types, cterm_fragment_types, charges, losses,
                                    deisotope, write_file, self.nr_used_cores)
 
 
@@ -50,7 +51,8 @@ def fragment_annotation(
         psms: PSMList,
         spectra_file: SpectrumFile,
         tolerance: float,
-        fragment_types: list[str],
+        nterm_fragment_types: list[str],
+        cterm_fragment_types: list[str],
         charges: list[str] | str,
         losses: list[str],
         deisotope: bool,
@@ -99,6 +101,8 @@ def fragment_annotation(
 
     print("\nAnnotating spectra in parallel...\n")
 
+    internal_fragment_types = get_internal_ion_types(nterm_fragment_types, cterm_fragment_types)
+
     if micro_batch:
         i = 0
         still_spectra_available = True
@@ -111,12 +115,12 @@ def fragment_annotation(
             else:
                 current_batch = psms[i:len(psms)]
                 still_spectra_available = False
-            p_result = Parallel(n_jobs=nr_used_cores)(delayed(calculate_ions_for_psms)(psm, tolerance, fragment_types, charges, losses, deisotope) for psm in current_batch)
+            p_result = Parallel(n_jobs=nr_used_cores)(delayed(calculate_ions_for_psms)(psm, tolerance, nterm_fragment_types, cterm_fragment_types, internal_fragment_types, charges, losses, deisotope) for psm in current_batch)
             psms_json += list(p_result)
             i += batch_size
     else:
         p_psms = tqdm(psms)  # tqdm is good for cli but bad for streamlit progress
-        p_result = Parallel(n_jobs=nr_used_cores)(delayed(calculate_ions_for_psms)(psm, tolerance, fragment_types, charges, losses, deisotope) for psm in p_psms)
+        p_result = Parallel(n_jobs=nr_used_cores)(delayed(calculate_ions_for_psms)(psm, tolerance, nterm_fragment_types, cterm_fragment_types, internal_fragment_types, charges, losses, deisotope) for psm in p_psms)
         psms_json = list(p_result)
 
     for psm in psms_json:
@@ -141,9 +145,25 @@ def fragment_annotation(
     return psms_dict
 
 
+def get_internal_ion_types(nterm_fragment_types: list[str], cterm_fragment_types: list[str]) -> list[str]:
+    """Get non-redundant internal ion types based on provided n-term and c-term fragment types."""
+    internal_ions = []
+    equiv_internal_ions = set()
+    for n_frag, c_frag in product(nterm_fragment_types, cterm_fragment_types):
+        equiv = constants.IDENTICAL_INTERNAL_IONS[(n_frag, c_frag)]
+        if equiv not in equiv_internal_ions:
+            equiv_internal_ions.add(equiv)
+            internal_ions.append(f"{n_frag}:{c_frag}")
+        else:
+            logger.debug("Skipping redundant internal ion: %s", f"{n_frag}:{c_frag}")
+    return internal_ions
+
+
 def calculate_ions_for_psms(psm,
                             tolerance: float,
-                            fragment_types: list[str],
+                            nterm_fragment_types: list[str],
+                            cterm_fragment_types: list[str],
+                            internal_fragment_types: list[str],
                             charges: list[str] | str,
                             losses: list[str],
                             deisotope: bool) -> dict[str, Any]:
@@ -163,11 +183,12 @@ def calculate_ions_for_psms(psm,
 
     theoretical_fragment_code = compute_theoretical_fragments(
         sequence_length=len(psm.peptidoform.sequence),
-        fragment_types=typed.List(fragment_types),
+        n_term_ions=typed.List(nterm_fragment_types),
+        c_term_ions=typed.List(cterm_fragment_types),
         charges=typed.List([int(c) for c in charges_used]),
         neutral_losses=typed.List(losses),
-        ion_directions=ion_directions,
-        internal=True
+        # ion_directions=ion_directions,
+        internal_ions=typed.List(internal_fragment_types),
     )
 
     theoretical_fragment_dict = {
@@ -215,14 +236,16 @@ def deisotope_peak_list(mzs: list[float], intensities: list[float]) -> tuple[lis
 @jit(nopython=True, cache=True)
 def compute_theoretical_fragments(
         sequence_length: int,
-        fragment_types: list[str],
+        n_term_ions: list[str],
+        c_term_ions: list[str],
         charges: list[int] = [1],
         neutral_losses: list[str] = [],
-        ion_directions: dict[str, str] = {},
-        internal: bool = True) -> list[str]:
+        # ion_directions: dict[str, str] = {},
+        internal_ions: list[str] = [],
+        ) -> list[str]:
 
-    n_term_ions = [ion_type for ion_type in fragment_types if ion_directions[ion_type] == "n-term"]
-    c_term_ions = [ion_type for ion_type in fragment_types if ion_directions[ion_type] == "c-term"]
+    # n_term_ions = [ion_type for ion_type in fragment_types if ion_directions[ion_type] == "n-term"]
+    # c_term_ions = [ion_type for ion_type in fragment_types if ion_directions[ion_type] == "c-term"]
 
     n_term = ["t:" + ion_type for ion_type in n_term_ions]
     c_term = [ion_type + ":t" for ion_type in c_term_ions]
@@ -257,11 +280,9 @@ def compute_theoretical_fragments(
 
     internal_frags_with_nl = ["" for _ in range(0)]  # typed empty list for Numba
 
-    if internal:
+    if internal_ions:
         # internal fragments
-        internal_frags = [
-            f"{n_term_ion}:{c_term_ion}" for n_term_ion in n_term_ions for c_term_ion in c_term_ions
-        ]
+
         internal_pos = [
             f"{i}:{j}"
             for i in range(2, sequence_length)
@@ -269,8 +290,8 @@ def compute_theoretical_fragments(
             if i <= j
         ]
         internal_frags = [
-            f"{internal_ions}@{internal_positions}"
-            for internal_ions in internal_frags
+            f"{ions}@{internal_positions}"
+            for ions in internal_ions
             for internal_positions in internal_pos
         ]
 
