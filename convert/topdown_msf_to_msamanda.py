@@ -90,7 +90,7 @@ def to_msamanda(msf_file: str, verify: bool = True) -> int:
     amanda.to_csv(f"{msf_file}.csv", sep="\t", index=False)
     if verify:
         psms = read_file(f"{msf_file}.csv", filetype="msamanda")
-        print(f"Successfully read {len(psms)} from file!")
+        print(f"Successfully read {len(psms)} PSMs from file!")
     return 0
 
 
