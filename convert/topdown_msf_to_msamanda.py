@@ -3,13 +3,18 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#   "pandas"
+#   "pandas",
+#   "psm-utils"
 # ]
 # ///
 
-import sys
 import sqlite3
+import argparse
 import pandas as pd
+from psm_utils.io import read_file
+
+__version = "1.0.0"
+__data = "2026-03-22"
 
 
 def read_msf(msf_file: str) -> dict[str, pd.DataFrame]:
@@ -22,7 +27,7 @@ def read_msf(msf_file: str) -> dict[str, pd.DataFrame]:
     return {"proteoforms": proteoforms, "modifications": modifications}
 
 
-def to_msamanda(msf_file: str) -> int:
+def to_msamanda(msf_file: str, verify: bool = True) -> int:
     msf = read_msf(msf_file)
     ##
     mods = dict()
@@ -83,8 +88,35 @@ def to_msamanda(msf_file: str) -> int:
         }
     )
     amanda.to_csv(f"{msf_file}.csv", sep="\t", index=False)
+    if verify:
+        psms = read_file(f"{msf_file}.csv", filetype="msamanda")
+        print(f"Successfully read {len(psms)} from file!")
     return 0
 
 
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="topdown_msf_to_msamanda.py",
+        description="Converts a MSF file with top-down proteomics results to MS Amanda format.",
+        epilog="(c) Bioinformatics Research Group, FH OÖ Campus Hagenberg, 2026",
+    )
+    parser.add_argument(
+        dest="msf",
+        help="MSF file to convert to MS Amanda format.",
+        type=str,
+    )
+    parser.add_argument(
+        "-c",
+        "--check",
+        dest="verify",
+        action="store_true",
+        help="Check PSMs with psm_utils.",
+    )
+    parser.add_argument("--version", action="version", version=__version)
+    args = parser.parse_args(argv)
+
+    return to_msamanda(args.msf, args.verify)
+
+
 if __name__ == "__main__":
-    exit(to_msamanda(sys.argv[1]))
+    exit(main())
