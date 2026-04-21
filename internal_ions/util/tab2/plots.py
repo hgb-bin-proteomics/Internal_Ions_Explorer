@@ -36,7 +36,7 @@ def common_type_pie(fragments_dataframe: pd.DataFrame) -> go.Figure:
 
 def fragments_hist_plotter(colname: str, xaxis_title: str, transform: Callable = lambda x: x):
     def func(fragments_dataframe: pd.DataFrame) -> go.Figure:
-        types = fragments_dataframe["frag_types"].unique()
+        types = list(fragments_dataframe["frag_types"].unique())
         types.sort()
         histograms = list()
         for t in types:
@@ -77,7 +77,7 @@ per_spec_ion_intens = spectrum_hist_plotter("total_int_", "Intensity Percentage"
 
 def violin_plotter(colname, xaxis_title, transform: Callable = lambda x: x):
     def func(fragments_dataframe: pd.DataFrame) -> go.Figure:
-        types = fragments_dataframe["frag_types"].unique()
+        types = list(fragments_dataframe["frag_types"].unique())
         types.sort()
         fig = go.Figure()
         for t in types:

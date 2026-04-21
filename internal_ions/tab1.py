@@ -85,6 +85,8 @@ def main(argv=None) -> None:
                                help="Neutral losses to consider for fragment ions. Multiple entries should be delimited by commas!",
                                disabled=st.session_state["sidebar_disabled"])
     st.session_state["losses"] = [loss.strip() for loss in losses_str.split(",")]
+    if "" not in st.session_state["losses"]:
+        st.session_state["losses"].append("")
 
     st.checkbox("Deisotope spectra", key="deisotope", value=True, help="Deisotope uploaded spectra or not.", disabled=st.session_state["sidebar_disabled"])
 
