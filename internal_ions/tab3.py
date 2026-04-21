@@ -76,7 +76,7 @@ def main(argv=None) -> None:
 
         # plot chromatogram
         spectra_chromatogram = st.plotly_chart(plot_spectra_chromatogram(spectra["spectra"]),
-                                               use_container_width=True,
+                                               width="stretch",
                                                theme="streamlit",
                                                key="chromatogram",
                                                on_select="rerun",
@@ -201,7 +201,7 @@ def main(argv=None) -> None:
         with center_button:
             run_filter = st.button("Filter spectra and create consensus spectrum",
                                    type="primary",
-                                   use_container_width=True)
+                                   width="stretch")
 
         if run_filter:
             selected_scans_list = [i for i in range(int(first_scan), int(last_scan) + 1)]
@@ -267,7 +267,7 @@ def main(argv=None) -> None:
                                                 st.session_state["consensus_spectrum"]["mz_mean"],
                                                 st.session_state["consensus_spectrum"]["cov_spectra"]
                                                 )
-        st.plotly_chart(spectrum_plot, use_container_width=True)
+        st.plotly_chart(spectrum_plot, width="stretch")
         st.markdown("**Figure 1:** Displaying consensus spetrum.")
 
     if "consensus_spectrum" in st.session_state:
@@ -337,7 +337,7 @@ def main(argv=None) -> None:
         if "generated_fraggraph" not in st.session_state:
             fg_run_l, fg_run_center, fg_run_r = st.columns(3)
             with fg_run_center:
-                run_fraggraph = st.button("Run Fraggraph!", type="primary", use_container_width=True)
+                run_fraggraph = st.button("Run Fraggraph!", type="primary", width="stretch")
 
         if "generated_fraggraph" in st.session_state or run_fraggraph:
             st.session_state["generated_fraggraph"] = True
