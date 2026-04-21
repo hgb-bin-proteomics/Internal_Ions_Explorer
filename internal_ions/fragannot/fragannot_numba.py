@@ -25,9 +25,13 @@ logger = logging.getLogger(__name__)
 
 
 class FragannotNumba:
+    nr_used_cores: int
+    do_parallel: bool
+    
     # set CPU cores here
-    def __init__(self, reserved_cores: int = 2):
+    def __init__(self, reserved_cores: int = 2, do_parallel: bool = True):
         self.nr_used_cores = multiprocessing.cpu_count() - reserved_cores
+        self.do_parallel = do_parallel
 
     def fragment_annotation(
             self,
@@ -41,9 +45,18 @@ class FragannotNumba:
             deisotope: bool,
             write_file: bool = True):
 
-        return fragment_annotation(psms, spectra_file, tolerance,
-                                   nterm_fragment_types, cterm_fragment_types, charges, losses,
-                                   deisotope, write_file, self.nr_used_cores)
+        return fragment_annotation(
+            psms=psms,
+            spectra_file=spectra_file,
+            tolerance=tolerance,
+            nterm_fragment_types=nterm_fragment_types,
+            cterm_fragment_types=cterm_fragment_types,
+            charges=charges,
+            losses=losses,
+            deisotope=deisotope,
+            write_file=write_file,
+            nr_used_cores=self.nr_used_cores,
+            do_parallel=self.do_parallel)
 
 
 # set micro batching and batch params here
@@ -59,7 +72,8 @@ def fragment_annotation(
         write_file: bool = True,
         nr_used_cores: int = 1,
         micro_batch: bool = True,
-        batch_size: int = 100):
+        batch_size: int = 100,
+        do_parallel: bool = True):
     """
     Annotate theoretical and observed fragment ions in a spectra file.
 
@@ -99,7 +113,7 @@ def fragment_annotation(
             psms_dict[psm.spectrum_id] = {"nr_idents_with_same_rank": 1}
             psms.append(psm)
 
-    print("\nAnnotating spectra in parallel...\n")
+    print(f"\nAnnotating spectra in {'parallel' if do_parallel else 'serial'}...\n")
 
     internal_fragment_types = get_internal_ion_types(nterm_fragment_types, cterm_fragment_types)
 
@@ -115,12 +129,18 @@ def fragment_annotation(
             else:
                 current_batch = psms[i:len(psms)]
                 still_spectra_available = False
-            p_result = Parallel(n_jobs=nr_used_cores)(delayed(calculate_ions_for_psms)(psm, tolerance, nterm_fragment_types, cterm_fragment_types, internal_fragment_types, charges, losses, deisotope) for psm in current_batch)
+            if do_parallel:
+                p_result = Parallel(n_jobs=nr_used_cores)(delayed(calculate_ions_for_psms)(psm, tolerance, nterm_fragment_types, cterm_fragment_types, internal_fragment_types, charges, losses, deisotope) for psm in current_batch)
+            else:
+                p_result = [calculate_ions_for_psms(psm, tolerance, nterm_fragment_types, cterm_fragment_types, internal_fragment_types, charges, losses, deisotope) for psm in current_batch]
             psms_json += list(p_result)
             i += batch_size
     else:
         p_psms = tqdm(psms)  # tqdm is good for cli but bad for streamlit progress
-        p_result = Parallel(n_jobs=nr_used_cores)(delayed(calculate_ions_for_psms)(psm, tolerance, nterm_fragment_types, cterm_fragment_types, internal_fragment_types, charges, losses, deisotope) for psm in p_psms)
+        if do_parallel:
+            p_result = Parallel(n_jobs=nr_used_cores)(delayed(calculate_ions_for_psms)(psm, tolerance, nterm_fragment_types, cterm_fragment_types, internal_fragment_types, charges, losses, deisotope) for psm in p_psms)
+        else:
+            p_result = [calculate_ions_for_psms(psm, tolerance, nterm_fragment_types, cterm_fragment_types, internal_fragment_types, charges, losses, deisotope) for psm in p_psms]
         psms_json = list(p_result)
 
     for psm in psms_json:

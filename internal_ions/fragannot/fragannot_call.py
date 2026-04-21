@@ -13,7 +13,9 @@ def fragannot_call(spectrum_file: SpectrumFile,
                    losses: list[str],
                    deisotope: bool,
                    verbose: bool = False) -> dict:
-    frag = FragannotNumba()
+
+    frag = FragannotNumba(do_parallel = True)
+
     fragannot_dict = frag.fragment_annotation(psms,
                                               spectrum_file,
                                               tolerance,
