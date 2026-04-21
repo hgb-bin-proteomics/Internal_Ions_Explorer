@@ -105,9 +105,10 @@ def main(argv=None) -> None:
                 st.markdown("**Figure 1:** Histogram illustrating the frequency distribution of ion types present in the dataset.")
 
             with frag_center_plot_col1_2:
-                st.markdown("**Ion Type Proportions**")
-                st.plotly_chart(common_type_pie(st.session_state["frag_center_filtered"]), width="stretch")
-                st.markdown("**Figure 2:** Pie chart displaying the proportional composition of ion types within the dataset.")
+                if st.session_state["frag_center_filtered"].shape[0]:
+                    st.markdown("**Ion Type Proportions**")
+                    st.plotly_chart(common_type_pie(st.session_state["frag_center_filtered"]), width="stretch")
+                    st.markdown("**Figure 2:** Pie chart displaying the proportional composition of ion types within the dataset.")
 
             st.markdown("**Distribution of m/z Values Across Ion Types**")
             st.plotly_chart(mz_dist_ion_type(st.session_state["frag_center_filtered"]), width="stretch")
