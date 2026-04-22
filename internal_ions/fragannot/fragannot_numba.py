@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class FragannotNumba:
     nr_used_cores: int
     do_parallel: bool
-    
+
     # set CPU cores here
     def __init__(self, reserved_cores: int = 2, do_parallel: bool = True):
         self.nr_used_cores = multiprocessing.cpu_count() - reserved_cores
@@ -98,6 +98,11 @@ def fragment_annotation(
     """
 
     print("Fragannot running using " + str(nr_used_cores) + " logical cores.\n")
+    logger.debug("nterm_fragment_types: %s", nterm_fragment_types)
+    logger.debug("cterm_fragment_types: %s", cterm_fragment_types)
+    logger.debug("charges: %s", charges)
+    logger.debug("losses: %s", losses)
+    logger.debug("deisotope: %s", deisotope)
 
     P = Parser(psms, is_streamlit=True)
 
