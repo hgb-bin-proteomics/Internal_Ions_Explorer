@@ -222,7 +222,7 @@ def calculate_ions_for_psms(psm,
 
     if deisotope:  # deisotoping TODO check desotoping method to optimize
         mzs, intensities = deisotope_peak_list(
-            psm.spectrum["mz"].tolist(), psm.spectrum["intensity"].tolist()
+            psm.spectrum["mz"], psm.spectrum["intensity"], tolerance=tolerance
         )
     else:
         mzs = psm.spectrum["mz"].tolist()
@@ -248,12 +248,13 @@ def calculate_ions_for_psms(psm,
             "precursor_intensity": 666}
 
 
-def deisotope_peak_list(mzs: list[float], intensities: list[float]) -> tuple[list[float], list[float]]:
-    peaks = ms_deisotope.deconvolution.utils.prepare_peaklist(zip(mzs, intensities))
-    deconvoluted_peaks, targeted = ms_deisotope.deconvolute_peaks(
-        peaks, averagine=ms_deisotope.peptide, scorer=ms_deisotope.MSDeconVFitter(10.0), verbose=True)
-    mzs = [p.mz for p in deconvoluted_peaks.peaks]
-    intensities = [p.intensity for p in deconvoluted_peaks.peaks]
+def deisotope_peak_list(mzs: list[float], intensities: list[float], tolerance: float) -> tuple[list[float], list[float]]:
+    peaks = ms_deisotope.deconvolution.utils.prepare_peaklist((mzs, intensities))
+    deconvoluted_peaks, _ = ms_deisotope.deconvolute_peaks(
+        peaks, averagine=ms_deisotope.peptide, scorer=ms_deisotope.MSDeconVFitter(10.0, tolerance), verbose=True)
+    peaks = ms_deisotope.peak_set.decharge(deconvoluted_peaks).peaks
+    mzs = [p.mz for p in peaks]
+    intensities = [p.intensity for p in peaks]
 
     return mzs, intensities
 
