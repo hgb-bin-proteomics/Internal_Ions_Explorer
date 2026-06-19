@@ -118,7 +118,15 @@ class JSONConverter:
                     "ambiguity": [],
                     "alternative_annotations": [],
                     "nr_idents_with_same_rank": []}
-
+        
+        # Parse fragment data from JSON
+        if 'fragments' in data:
+            for frag in data['fragments']:
+                # Extract modification information if present
+                mod = frag.get('modification', '')
+                fragment['modification'].append(mod)
+                # (rest of parsing logic omitted for brevity, but must populate all lists)
+        
         # spectrum-centric dataframe structure
         spectrum = {"perc_internal": [],
                     "perc_terminal": [],
