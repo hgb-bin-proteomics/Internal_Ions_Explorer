@@ -67,6 +67,14 @@ class FragGraph(nx.DiGraph):
     L = 0
     N = 1.008664915
 
+    # Fallback modification masses (monoisotopic) for common unimod names
+    _FALLBACK_MOD_MASS = {
+        'Methyl': 14.015650064,  # C H2
+        'Acetyl': 42.010565,     # C2 H2 O
+        'Oxidation': 15.994915,  # O
+        # add more as needed
+    }
+
     def __init__(self, **kwargs):
         super().__init__()
 
