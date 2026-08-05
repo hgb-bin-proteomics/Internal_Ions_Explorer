@@ -150,7 +150,7 @@ def uniquify_duplicate_spectrum_ids(psms):
     counts = Counter(psm.spectrum_id for psm in psms)
     seen = Counter()
     aliases = {}
-    originals = {}
+    output_ids = {}
 
     for psm in psms:
         original = psm.spectrum_id
@@ -160,9 +160,9 @@ def uniquify_duplicate_spectrum_ids(psms):
         unique = f"{original}__psm_{seen[original]}"
         psm.spectrum_id = unique
         aliases[unique] = original
-        originals[unique] = original
+        output_ids[unique] = f"{original}_{seen[original]}"
 
-    return aliases, originals, counts
+    return aliases, output_ids, counts
 
 
 def run_job(args, spectrum_file: Path, ident_file: Path, out_dir: Path) -> None:
@@ -175,11 +175,11 @@ def run_job(args, spectrum_file: Path, ident_file: Path, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     spectra = SpectrumFile(LocalUpload(spectrum_file))
     psms = read_file(str(ident_file), filetype=args.filetype)
-    aliases, originals, original_counts = {}, {}, Counter()
+    aliases, output_ids, original_counts = {}, {}, Counter()
 
     spectra_arg = spectra
     if args.all_identifications:
-        aliases, originals, original_counts = uniquify_duplicate_spectrum_ids(psms)
+        aliases, output_ids, original_counts = uniquify_duplicate_spectrum_ids(psms)
         spectra_arg = SpectrumAliases(spectra, aliases)
 
     result = fragannot_call(
@@ -195,8 +195,8 @@ def run_job(args, spectrum_file: Path, ident_file: Path, out_dir: Path) -> None:
 
     if args.all_identifications:
         for entry in result.values():
-            original = originals.get(entry["spectrum_id"], entry["spectrum_id"])
-            entry["spectrum_id"] = original
+            original = aliases.get(entry["spectrum_id"], entry["spectrum_id"])
+            entry["spectrum_id"] = output_ids.get(entry["spectrum_id"], entry["spectrum_id"])
             entry["nr_idents_with_same_rank"] = original_counts[original]
 
     fragment_df, spectrum_df = JSONConverter().to_dataframes(result)
