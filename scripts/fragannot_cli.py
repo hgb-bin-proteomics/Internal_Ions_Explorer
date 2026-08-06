@@ -1,20 +1,19 @@
-#!/bin/bash
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")/.."
-export UV_CACHE_DIR="${UV_CACHE_DIR:-.uv-cache}"
-export MPLCONFIGDIR="${MPLCONFIGDIR:-/tmp/internal_ions_mpl_cache}"
-uv sync
-
-uv run python - "$@" <<'PY'
+#!/usr/bin/env -S uv run python
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from collections import Counter
 from io import BytesIO
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/internal_ions_mpl_cache")
 
 from psm_utils.io import FILETYPES
 from pyteomics import mass
@@ -88,7 +87,7 @@ def ions(value: str, direction: str) -> list[str]:
 
 
 def parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="fragannot_cli.sh", description="Run Fragannot from the command line.")
+    p = argparse.ArgumentParser(prog="fragannot_cli.py", description="Run Fragannot from the command line.")
     p.add_argument("--spectrum", nargs="+", required=True, type=Path, help="MGF spectrum file(s).")
     id_group = p.add_mutually_exclusive_group(required=True)
     id_group.add_argument("--ident", type=Path, help="Identification file. Only valid with one --spectrum.")
@@ -224,4 +223,3 @@ def main(argv: list[str]) -> int:
 
 
 raise SystemExit(main(sys.argv[1:]))
-PY

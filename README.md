@@ -26,15 +26,15 @@
 
 ## Running Fragannot from the Command Line
 
-Use `scripts/fragannot_cli.sh` to create `fragment_centric_<spectrum>.csv`,
+Use `scripts/fragannot_cli.py` to create `fragment_centric_<spectrum>.csv`,
 `spectrum_centric_<spectrum>.csv`, and `result_<spectrum>.json` without opening
-the Streamlit app. The script runs from the repository root internally and uses
-`uv sync` before starting the analysis.
+the Streamlit app. Run it through `uv run`, or execute it directly from
+`scripts/` after making sure `uv` is available.
 
 Single spectrum/identification pair:
 
 ```bash
-scripts/fragannot_cli.sh \
+uv run scripts/fragannot_cli.py \
   --spectrum data/2022_mix2_rep1.mgf \
   --ident data/2022_mix2_rep1.mzid \
   --filetype mzid \
@@ -46,10 +46,21 @@ scripts/fragannot_cli.sh \
   --losses H2O
 ```
 
+From the scripts folder, the same command also works as:
+
+```bash
+cd scripts
+./fragannot_cli.py \
+  --spectrum ../data/2022_mix2_rep1.mgf \
+  --ident ../data/2022_mix2_rep1.mzid \
+  --filetype mzid \
+  --check-only
+```
+
 Batch mode with one identification file per spectrum:
 
 ```bash
-scripts/fragannot_cli.sh \
+uv run scripts/fragannot_cli.py \
   --spectrum /data/tmp/InternalPhospho/OXP*.mgf \
   --ident-template '/path/to/identifications/phospho_{stem}_decoy.tsv' \
   --filetype msms \
