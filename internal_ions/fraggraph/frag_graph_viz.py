@@ -55,7 +55,7 @@ def draw_graph3(
     # for each edge and its attributes in the networkx graph
     for source, target, edge_attrs in networkx_graph.edges(data=True):
         # if value/size not specified directly, and weight is specified, set 'value' to 'weight'
-        if not "value" in edge_attrs and not "size" in edge_attrs and "weight" in edge_attrs:
+        if "value" not in edge_attrs and "size" not in edge_attrs and "weight" in edge_attrs:
             # place at key 'value' the weight of the edge
             edge_attrs["value"] = edge_attrs["weight"]
         # add the edge
