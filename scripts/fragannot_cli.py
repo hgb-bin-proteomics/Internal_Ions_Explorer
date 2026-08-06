@@ -9,6 +9,7 @@ import sys
 from collections import Counter
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -28,7 +29,7 @@ class LocalUpload(BytesIO):
 
 
 class SpectrumAliases:
-    def __init__(self, spectra: SpectrumFile, aliases: dict[str, str]):
+    def __init__(self, spectra: Any, aliases: dict[str, str]):
         self.spectra = spectra
         self.aliases = aliases
         self.name = spectra.name
@@ -211,7 +212,11 @@ def run_job(args, spectrum_file: Path, ident_file: Path, out_dir: Path) -> None:
 
 
 def main(argv: list[str]) -> int:
-    args = parser().parse_args(argv)
+    arg_parser = parser()
+    if not argv:
+        arg_parser.print_help()
+        return 0
+    args = arg_parser.parse_args(argv)
     jobs = validate(args)
     if args.check_only:
         for spectrum, ident, out_dir in jobs:
