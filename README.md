@@ -24,6 +24,62 @@
 - Install requirements!
 - Run `streamlit run streamlit_app.py`
 
+## Running Fragannot from the Command Line
+
+Use `scripts/fragannot_cli.py` to create `fragment_centric_<spectrum>.csv`,
+`spectrum_centric_<spectrum>.csv`, and `result_<spectrum>.json` without opening
+the Streamlit app. Run it through `uv run`, or execute it directly from
+`scripts/` after making sure `uv` is available.
+
+Single spectrum/identification pair:
+
+```bash
+uv run scripts/fragannot_cli.py \
+  --spectrum data/2022_mix2_rep1.mgf \
+  --ident data/2022_mix2_rep1.mzid \
+  --filetype mzid \
+  --out-dir out \
+  --tolerance 0.02 \
+  --nterm b \
+  --cterm y \
+  --charges +1 \
+  --losses H2O
+```
+
+From the scripts folder, the same command also works as:
+
+```bash
+cd scripts
+./fragannot_cli.py \
+  --spectrum ../data/2022_mix2_rep1.mgf \
+  --ident ../data/2022_mix2_rep1.mzid \
+  --filetype mzid \
+  --check-only
+```
+
+Batch mode with one identification file per spectrum:
+
+```bash
+uv run scripts/fragannot_cli.py \
+  --spectrum /data/tmp/InternalPhospho/OXP*.mgf \
+  --ident-template '/path/to/identifications/phospho_{stem}_decoy.tsv' \
+  --filetype msms \
+  --out-dir /path/to/output
+```
+
+Useful flags:
+
+- `--all-identifications`: process all identifications assigned to the same `spectrum_id`;
+  duplicate spectrum IDs are exported as `<spectrum_id>_1`, `<spectrum_id>_2`, etc.
+- `--check-only`: validate files and parameters without running Fragannot.
+- `--deisotope` / `--no-deisotope`: enable or disable deisotoping.
+- `--no-json`: write only the two CSV files.
+- `--nterm b,c`, `--cterm y,z`, `--charges +1,+2`, `--losses H2O,NH3`: set annotation parameters.
+
+The CLI validates file existence, `.mgf` spectrum input, known `psm_utils`
+filetypes, positive tolerance, valid ion names, non-zero integer charges, and
+neutral-loss formulas.
+
 ## Running the App via Docker
 
 - Running this app via Docker is possible with:
