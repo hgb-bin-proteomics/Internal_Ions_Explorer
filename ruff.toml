@@ -1,0 +1,88 @@
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.7
+target-version = "py312"
+
+[lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# select = ["E4", "E7", "E9", "F"]
+select = ["E", "W", "F"]
+# extend-select = ["S", "B", "A", "Q", "N", "D1", "PD", "UP", "EXE", "FIX", "FA102", "RUF1"]
+# Ignore the following rules:
+# - E501: line-too-long
+#   Line too long
+# - B006: mutable-argument-default
+#   Do not use mutable data structures for argument defaults
+# - UP015: redundant-open-modes
+#   Unnecessary mode argument
+# - UP045: non-pep604-annotation-optional
+#   Use X | None for type annotations
+# - EXE001: shebang-not-executable
+#   Shebang is present but file is not executable (Unix only)
+# - EXE002: shebang-missing-executable-file
+#   The file is executable but no shebang is present (Unix only)
+ignore = ["E501", "B006", "UP015", "UP045", "EXE001", "EXE002"]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[lint.per-file-ignores]
+# Ignore extended selection in tests and sphinx configuration.
+"tests/*" = ["S", "B", "A", "Q", "N", "D1", "PD", "UP"]
+"docs/*" = ["S", "B", "A", "Q", "N", "D1", "PD", "UP"]
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings.
+docstring-code-format = true
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+docstring-code-line-length = "dynamic"

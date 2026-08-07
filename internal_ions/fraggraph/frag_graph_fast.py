@@ -334,7 +334,7 @@ class FragGraph(nx.DiGraph):
                        node_dict["start_pos"]: node_dict["end_pos"]
         ]:
             sequence.append(aa)
-            if not mod is None:
+            if mod is not None:
                 mods.extend([m.mass for m in mod])
         sequence = "".join(sequence)
 
@@ -1809,7 +1809,6 @@ class FragGraph(nx.DiGraph):
         )
 
         # Assuming a Gaussian distribution, you can calculate the probabilities using the cumulative distribution function
-        from scipy.stats import norm
 
         # probabilities = norm.cdf(predictions)
 
@@ -1823,8 +1822,6 @@ class FragGraph(nx.DiGraph):
         self, smoothing_factor=1, apply_weighting=False, column_smoothing_window=0
     ):
         import numpy as np
-        import matplotlib.pyplot as plt
-        from scipy.optimize import curve_fit
 
         # get data
         peptide_lengths = []

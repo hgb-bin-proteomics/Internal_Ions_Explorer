@@ -24,7 +24,7 @@ def plot_spectrum(intensity_values, mz_values) -> go.Figure:
 def plot_consensus_spectrum(intensity_values, mz_values, coverage) -> go.Figure:
     fig = go.Figure()
     # Define a color gradient from black (cov = 1) to yellow (cov = 0).
-    get_color = lambda v: (int(255 * (1 - v)), int(255 * (1 - v)), 0) if v < 1 else (0, 0, 0)
+    get_color = lambda v: (int(255 * (1 - v)), int(255 * (1 - v)), 0) if v < 1 else (0, 0, 0)  # noqa: E731
 
     for mz, i, cov in zip(mz_values, intensity_values, coverage):
         fig.add_trace(go.Scatter(x=[mz, mz], y=[0, i], mode='lines', line=dict(color='rgb' + str(get_color(cov)))))
