@@ -35,6 +35,9 @@ jobs:
         uv add --dev ruff pytest
         uv lock --upgrade-package ruff
         uv lock --upgrade-package pytest
+    - name: Dry run to avoid compilation warnings from external packages
+      run: |
+        uv run fragment-explorer -h
     - name: Lint with ruff
       run: |
         uv run ruff check --output-format github --config ruff.toml
