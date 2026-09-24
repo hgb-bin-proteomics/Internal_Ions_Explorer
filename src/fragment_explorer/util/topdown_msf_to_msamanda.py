@@ -1,13 +1,3 @@
-#!/usr/bin/env python3
-#
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#   "pandas",
-#   "psm-utils"
-# ]
-# ///
-
 import sqlite3
 import argparse
 import pandas as pd
@@ -119,4 +109,4 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-    exit(main())
+    raise SystemExit(main())
