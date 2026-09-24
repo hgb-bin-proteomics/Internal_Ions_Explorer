@@ -34,10 +34,12 @@ jobs:
     - name: Setup uv
       run: |
         uv python pin ${{ matrix.python-version }}
-        uv add ruff pytest
+        uv add --dev ruff pytest
+        uv lock --upgrade-package ruff
+        uv lock --upgrade-package pytest
     - name: Lint with ruff
       run: |
         uv run ruff check --output-format github --config ruff.toml
     - name: Test with pytest
       run: |
-        uv run pytest tests/tests.py
+        uv run pytest
