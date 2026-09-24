@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.12', '3.13', '3.14']
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v5
@@ -24,9 +25,6 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Copy scripts and data to "/tests"
-      run: |
-        cp streamlit_app.py tests
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -34,10 +32,15 @@ jobs:
     - name: Setup uv
       run: |
         uv python pin ${{ matrix.python-version }}
-        uv add ruff pytest
+        uv add --dev ruff pytest
+        uv lock --upgrade-package ruff
+        uv lock --upgrade-package pytest
+    - name: Dry run to avoid compilation warnings from external packages
+      run: |
+        uv run fragment-explorer -h
     - name: Lint with ruff
       run: |
         uv run ruff check --output-format github --config ruff.toml
     - name: Test with pytest
       run: |
-        uv run pytest tests/tests.py
+        uv run pytest

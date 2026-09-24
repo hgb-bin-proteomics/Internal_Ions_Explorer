@@ -5,16 +5,16 @@ import streamlit as st
 import logging
 
 # import tabs
-from internal_ions import tab1, tab2
+from fragment_explorer import tab1, tab2
 
 # import constants
-from internal_ions.util.constants import REPO_OWNER, REPO_NAME, DIV_COLOR
+from fragment_explorer.util.constants import REPO_OWNER, REPO_NAME, DIV_COLOR
 
 
 # main page content
 def main_page():
 
-    st.title("Internal Ions Explorer")
+    st.title("Fragment Explorer")
 
     # set tab names here
     t1, t2 = st.tabs(["Data Import & Annotation", "Visualization"])
@@ -33,7 +33,7 @@ def main(argv=None) -> None:
 
     about_str = f"The server is running Fragment Explorer version {__version__}!"
 
-    st.set_page_config(page_title="Fragannot",
+    st.set_page_config(page_title="Fragment Explorer",
                        page_icon=":test_tube:",
                        layout="wide",
                        initial_sidebar_state="expanded",
@@ -44,15 +44,15 @@ def main(argv=None) -> None:
 
     with st.sidebar:
 
-        st.title("Internal Ions")
+        st.title("Fragment Explorer")
 
-        st.image("img/logo_1.png", caption="Logo")
+        st.image("docs/logo/logo_1.png", caption="FE: the Fragment Explorer logo (c) Arthur Grimaud.")
 
         st.markdown(about_str)
 
     ############################################################################
         st.subheader("Parameters", divider=DIV_COLOR)
-        st.markdown("These parameters will be used globally across the internal ions explorer.")
+        st.markdown("These parameters will be used globally across Fragment Explorer.")
 
         # tolerance
         st.markdown("**Tolerance**")
@@ -136,11 +136,17 @@ def main(argv=None) -> None:
     ############################################################################
         st.subheader("About the Project", divider=DIV_COLOR)
 
-        contact_str = \
-            "**Contact:**\n- [Arthur Grimaud](mailto:agrimaud@bmb.sdu.dk)\n- [Veit Schwämmle](mailto:veits@bmb.sdu.dk)\n" + \
-            "- [Caroline Lennartsson](mailto:caroline.lennartsson@cpr.ku.dk)\n- [Louise Buur](mailto:louise.buur@fh-hagenberg.at)\n" + \
-            "- [Micha Birklbauer](mailto:micha.birklbauer@gmail.com)\n- [Vladimir Gorshkov](mailto:homer2k@gmail.com)\n" + \
+        contact_str = (
+            "**Contact:**\n"
+            "- [Arthur Grimaud](mailto:agrimaud@bmb.sdu.dk)\n"
+            "- [Lev Levitskiy](mailto:levitsky@bmb.sdu.dk)\n"
+            "- [Veit Schwämmle](mailto:veits@bmb.sdu.dk)\n"
+            "- [Caroline Lennartsson](mailto:caroline.lennartsson@cpr.ku.dk)\n"
+            "- [Louise Buur](mailto:louise.buur@fh-hagenberg.at)\n"
+            "- [Micha Birklbauer](mailto:micha.birklbauer@fh-hagenberg.at)\n"
+            "- [Vladimir Gorshkov](mailto:homer2k@gmail.com)\n"
             "- [Zoltan Udvardy](mailto:zoltan.udvardy.ipbs@gmail.com)"
+            )
         st.markdown(contact_str)
 
         license_str = "**License:** [???]()"
