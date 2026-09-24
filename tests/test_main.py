@@ -1,4 +1,12 @@
-from internal_ions.util import converter
+from fragment_explorer.util import converter
+
+
+def test_streamlit():
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file("../streamlit_app.py", default_timeout=30.0)
+    at.run(timeout=60.0)
+    assert not at.exception
 
 
 def test_fragment_parse():

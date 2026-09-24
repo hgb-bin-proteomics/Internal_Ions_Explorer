@@ -5,10 +5,10 @@ import streamlit as st
 import logging
 
 # import tabs
-from internal_ions import tab1, tab2
+from fragment_explorer import tab1, tab2
 
 # import constants
-from internal_ions.util.constants import REPO_OWNER, REPO_NAME, DIV_COLOR
+from fragment_explorer.util.constants import REPO_OWNER, REPO_NAME, DIV_COLOR
 
 
 # main page content
