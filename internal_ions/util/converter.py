@@ -260,7 +260,7 @@ class JSONConverter:
                 if start == end:
                     intensities_single_aa += intensities[i]
 
-        return intensities_single_aa / sum(intensities)
+        return intensities_single_aa / sum(intensities) if len(intensities) else None
 
     def _find_explained_precursor(self, entry: Dict) -> Union[int, float]:
         """
@@ -273,7 +273,10 @@ class JSONConverter:
             precursor_intensity = float(entry["precursor_intensity"])
 
         if precursor_intensity > 0:
-            return precursor_intensity / sum(entry["annotation"]["intensity"])
+            if(sum(entry["annotation"]["intensity"])) == 0:
+                return None
+            else:
+                return precursor_intensity / sum(entry["annotation"]["intensity"])
 
         return -1
 
@@ -342,9 +345,9 @@ class JSONConverter:
                 non_annotated += 1
                 total_int_non += intensities[i]
 
-        return {"internal": internal / len(fragments),
-                "terminal": terminal / len(fragments),
-                "non_annotated": non_annotated / len(fragments),
+        return {"internal": internal / len(fragments) if len(fragments) > 0 else None,
+                "terminal": terminal / len(fragments) if len(fragments) > 0 else None,
+                "non_annotated": non_annotated / len(fragments) if len(fragments) > 0 else None,
                 "total_int_internal": total_int_internal,
                 "total_int_terminal": total_int_terminal,
                 "total_int_non": total_int_non}
