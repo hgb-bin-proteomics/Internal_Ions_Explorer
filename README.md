@@ -26,6 +26,10 @@
 
 ## Running Fragannot from the Command Line
 
+```bash
+uv run fragment-explorer --spectrum data/2022_mix2_rep1.mgf --ident data/2022_mix2_rep1.mzid --filetype mzid --out-dir out --tolerance 0.02 --nterm b --cterm y --charges +1 --losses H2O
+```
+
 Use `scripts/fragannot_cli.py` to create `fragment_centric_<spectrum>.csv`,
 `spectrum_centric_<spectrum>.csv`, and `result_<spectrum>.json` without opening
 the Streamlit app. Run it through `uv run`, or execute it directly from
@@ -34,7 +38,7 @@ the Streamlit app. Run it through `uv run`, or execute it directly from
 Single spectrum/identification pair:
 
 ```bash
-uv run scripts/fragannot_cli.py \
+uv run fragment-explorer \
   --spectrum data/2022_mix2_rep1.mgf \
   --ident data/2022_mix2_rep1.mzid \
   --filetype mzid \
@@ -46,13 +50,17 @@ uv run scripts/fragannot_cli.py \
   --losses H2O
 ```
 
-From the scripts folder, the same command also works as:
+_or on Microsoft Windows:_
+```bash
+uv run fragment-explorer --spectrum data/2022_mix2_rep1.mgf --ident data/2022_mix2_rep1.mzid --filetype mzid --out-dir out --tolerance 0.02 --nterm b --cterm y --charges +1 --losses H2O
+```
+
+Check only:
 
 ```bash
-cd scripts
-./fragannot_cli.py \
-  --spectrum ../data/2022_mix2_rep1.mgf \
-  --ident ../data/2022_mix2_rep1.mzid \
+fragment-explorer \
+  --spectrum data/2022_mix2_rep1.mgf \
+  --ident data/2022_mix2_rep1.mzid \
   --filetype mzid \
   --check-only
 ```
@@ -60,7 +68,7 @@ cd scripts
 Batch mode with one identification file per spectrum:
 
 ```bash
-uv run scripts/fragannot_cli.py \
+uv run fragment-explorer \
   --spectrum /data/tmp/InternalPhospho/OXP*.mgf \
   --ident-template '/path/to/identifications/phospho_{stem}_decoy.tsv' \
   --filetype msms \

@@ -1,25 +1,21 @@
-#!/usr/bin/env -S uv run python
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import sys
 from collections import Counter
 from io import BytesIO
 from pathlib import Path
 from typing import Any
 
 from psm_utils.io import FILETYPES
+from psm_utils.io import read_file
 from pyteomics import mass
 
-from internal_ions.util import constants
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/internal_ions_mpl_cache")
+from .util import constants
+from .fragannot.fragannot_call import fragannot_call
+from .util.converter import JSONConverter
+from .util.spectrumio import SpectrumFile
 
 
 class LocalUpload(BytesIO):
@@ -166,12 +162,6 @@ def uniquify_duplicate_spectrum_ids(psms):
 
 
 def run_job(args, spectrum_file: Path, ident_file: Path, out_dir: Path) -> None:
-    from psm_utils.io import read_file
-
-    from internal_ions.fragannot.fragannot_call import fragannot_call
-    from internal_ions.util.converter import JSONConverter
-    from internal_ions.util.spectrumio import SpectrumFile
-
     out_dir.mkdir(parents=True, exist_ok=True)
     spectra = SpectrumFile(LocalUpload(spectrum_file))
     psms = read_file(str(ident_file), filetype=args.filetype)
@@ -211,11 +201,8 @@ def run_job(args, spectrum_file: Path, ident_file: Path, out_dir: Path) -> None:
     print(f"Wrote {spectrum_path}")
 
 
-def main(argv: list[str]) -> int:
+def main(argv: list[str] | None = None) -> int:
     arg_parser = parser()
-    if not argv:
-        arg_parser.print_help()
-        return 0
     args = arg_parser.parse_args(argv)
     jobs = validate(args)
     if args.check_only:
@@ -226,5 +213,5 @@ def main(argv: list[str]) -> int:
         run_job(args, spectrum, ident, out_dir)
     return 0
 
-
-raise SystemExit(main(sys.argv[1:]))
+if __name__ == "__main__":
+    raise SystemExit(main())
